@@ -19,13 +19,17 @@ import { Leaderboard } from './components/Leaderboard'
 import { AdminPanel } from './components/AdminPanel'
 import { Auth } from './components/Auth'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Wallet, Candy, User as UserIcon, LayoutDashboard, Trophy, LogOut, Crown, ShieldAlert, Gift, Clock, Zap, Target, Disc, Layers, Cherry, FastForward, Send, Info, Swords, ShoppingBag, Package } from 'lucide-react'
+import { 
+  Wallet, Candy, User as UserIcon, LayoutDashboard, Trophy, LogOut, 
+  Crown, ShieldAlert, Gift, Clock, Zap, Target, Disc, Layers, 
+  Cherry, FastForward, Send, Info, Swords, ShoppingBag, Package, Heart 
+} from 'lucide-react'
 import confetti from 'canvas-confetti'
 
 type ViewType = 'home' | 'coinflip' | 'mines' | 'blackjack' | 'crash' | 'slots' | 'roulette' | 'cups' | 'tower' | 'race' | 'plinko' | 'transfer' | 'leaderboard' | 'admin' | 'about' | 'arena' | 'shop' | 'inventory';
 
 function App() {
-  const { user, balance, isOwner, signOut, loading, lastClaim, claimDaily } = useWallet();
+  const { user, balance, stats, isOwner, signOut, loading, lastClaim, claimDaily } = useWallet();
   const [activeView, setActiveView] = useState<ViewType>('home');
   const [showMenu, setShowMenu] = useState(false);
   const [timeLeft, setTimeLeft] = useState("");
@@ -49,7 +53,6 @@ function App() {
 
   if (loading) return null;
   if (!user) return <Auth />;
-  (window as any).currentUsername = user.username;
 
   return (
     <div className="min-h-screen bg-[#0f0202] text-white selection:bg-red-500/30 font-sans pb-20 overflow-x-hidden">
@@ -59,7 +62,22 @@ function App() {
         </motion.div>
 
         <div className="flex items-center gap-4">
-          <div className="bg-[#2a0a0a] border border-red-500/20 px-4 py-2 rounded-xl flex items-center gap-3 shadow-lg shadow-red-950/20">
+          
+          {/* --- NEW HEALTH BAR --- */}
+          <div className="hidden md:flex items-center gap-3 bg-[#2a0a0a] border border-red-500/20 px-4 py-2 rounded-xl shadow-lg min-w-[140px]">
+            <Heart size={18} className="text-red-500 fill-red-500" />
+            <div className="flex-1 h-2 bg-black/40 rounded-full overflow-hidden border border-white/5">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${(stats.hp / stats.maxHp) * 100}%` }}
+                className="h-full bg-red-600 shadow-[0_0_10px_rgba(239,68,68,0.5)]"
+              />
+            </div>
+            <span className="text-[10px] font-black text-white/50">{stats.hp}</span>
+          </div>
+
+          {/* BALANCE DISPLAY */}
+          <div className="bg-[#2a0a0a] border border-red-500/20 px-4 py-2 rounded-xl flex items-center gap-3 shadow-lg">
             <Wallet size={18} className="text-red-500" />
             <span className="font-black text-lg tracking-tight">${balance?.toLocaleString()}</span>
           </div>
@@ -73,11 +91,9 @@ function App() {
               {showMenu && (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-64 bg-[#1a0505] border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-2 z-[100]">
                   <div className="px-4 py-4 border-b border-white/5 mb-2 text-center font-black text-red-500 uppercase italic truncate text-lg">{user.username}</div>
-                  
                   <MenuBtn icon={<Package size={16}/>} label="MY VAULT" onClick={() => {setActiveView('inventory'); setShowMenu(false)}} />
                   <MenuBtn icon={<Swords size={16}/>} label="PVP ARENA" onClick={() => {setActiveView('arena'); setShowMenu(false)}} />
                   <MenuBtn icon={<ShoppingBag size={16}/>} label="CANDY SHOP" onClick={() => {setActiveView('shop'); setShowMenu(false)}} />
-                  
                   <div className="h-[1px] bg-white/5 my-1" />
                   {isOwner && <MenuBtn icon={<ShieldAlert size={16}/>} label="ADMIN TOOLS" onClick={() => {setActiveView('admin'); setShowMenu(false)}} />}
                   <MenuBtn icon={<Trophy size={16}/>} label="LEADERBOARD" onClick={() => {setActiveView('leaderboard'); setShowMenu(false)}} />
@@ -159,7 +175,7 @@ function GameCard({ title, icon, color, onClick, darkText = false }: any) {
   return (
     <motion.div whileHover={{ scale: 1.05, y: -8 }} whileTap={{ scale: 0.98 }} onClick={onClick} className={`h-48 rounded-[2.5rem] bg-gradient-to-br ${color} p-8 cursor-pointer overflow-hidden shadow-2xl border-2 border-white/5 flex flex-col justify-between group transition-all`}>
        <div className={`${darkText ? 'text-black/20' : 'text-white/20'}`}>{icon}</div>
-       <h3 className={`text-4xl font-black italic uppercase tracking-tighter ${darkText ? 'text-black' : 'text-white'}`}>{title}</h3>
+       <h3 className={`text-3xl font-black italic uppercase tracking-tighter ${darkText ? 'text-black' : 'text-white'}`}>{title}</h3>
     </motion.div>
   )
 }

@@ -22,19 +22,19 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       setLastClaim(data.last_daily_claim === '-infinity' ? null : data.last_daily_claim);
       
       // Auto-calculate stats based on inventory
-      recalculateStats(data.inventory || []);
+      recalculateStats(data.hp, data.max_hp, data.inventory || []);
     }
     setLoading(false);
   };
 
-  const recalculateStats = (items: any[]) => {
+  const recalculateStats = (currentHp: number, max: number, items: any[]) => {
     let atk = 10;
     let def = 5;
     items.forEach(item => {
       if (item.type === 'weapon') atk += item.stat;
       if (item.type === 'armor') def += item.stat;
     });
-    setStats({ hp: 100, maxHp: 100, attack: atk, defense: def });
+    setStats({ hp: currentHp, maxHp: max, attack: atk, defense: def });
   };
 
   useEffect(() => {
