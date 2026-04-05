@@ -6,52 +6,43 @@ const WalletContext = createContext<any>(null);
 export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(null);
   const [balance, setBalance] = useState(0);
+  const [stats, setStats] = useState({ hp: 100, maxHp: 100, attack: 10, defense: 5 });
+  const [inventory, setInventory] = useState<any[]>([]);
   const [isOwner, setIsOwner] = useState(false);
-  const [lastClaim, setLastClaim] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) fetchProfile(session.user);
-      else setLoading(false);
-    });
-
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) fetchProfile(session.user);
-      else { setUser(null); setBalance(0); setIsOwner(false); setLoading(false); }
-    });
-    return () => authListener.subscription.unsubscribe();
-  }, []);
 
   const fetchProfile = async (userAuth: any) => {
     const { data } = await supabase.from('profiles').select('*').eq('id', userAuth.id).single();
     if (data) {
       setUser({ ...userAuth, username: data.username });
       setBalance(data.balance);
+      setStats({ hp: data.hp, maxHp: data.max_hp, attack: data.attack, defense: data.defense });
+      setInventory(data.inventory || []);
       setIsOwner(data.is_owner || data.username.toLowerCase() === 'cane');
-      setLastClaim(data.last_daily_claim?.includes('1970') ? null : data.last_daily_claim);
     }
     setLoading(false);
   };
 
-  const updateBalance = async (newBalance: number) => {
-    setBalance(newBalance);
-    if (user) await supabase.from('profiles').update({ balance: newBalance }).eq('id', user.id);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) fetchProfile(session.user);
+      else setLoading(false);
+    });
+  }, []);
+
+  const updateProfile = async (updates: any) => {
+    if (!user) return;
+    const { error } = await supabase.from('profiles').update(updates).eq('id', user.id);
+    if (!error) await fetchProfile(user);
   };
 
   return (
     <WalletContext.Provider value={{ 
-      user, balance, isOwner, loading, lastClaim,
-      addWin: (amt: number) => updateBalance(balance + amt),
-      removeBet: (amt: number) => updateBalance(balance - amt),
-      setExactBalance: (amt: number) => updateBalance(amt),
-      claimDaily: async () => {
-        const now = new Date().toISOString();
-        const newBal = balance + 15000;
-        setBalance(newBal);
-        setLastClaim(now);
-        await supabase.from('profiles').update({ balance: newBal, last_daily_claim: now }).eq('id', user.id);
-      },
+      user, balance, stats, inventory, isOwner, loading,
+      addWin: (amt: number) => updateProfile({ balance: balance + amt }),
+      removeBet: (amt: number) => updateProfile({ balance: balance - amt }),
+      updateStats: (newStats: any) => updateProfile(newStats),
+      updateInventory: (newInv: any[]) => updateProfile({ inventory: newInv }),
       signOut: () => supabase.auth.signOut()
     }}>
       {!loading && children}
