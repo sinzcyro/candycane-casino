@@ -10,18 +10,17 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Wallet, Candy, User as UserIcon, LayoutDashboard, Trophy, ShoppingBag, LogOut, Crown } from 'lucide-react'
 
 function App() {
-  const { user, balance, inventory, isOwner, signOut } = useWallet();
+  const { user, balance, inventory, isOwner, signOut, loading } = useWallet();
   const [activeView, setActiveView] = useState<'home' | 'coinflip' | 'mines' | 'blackjack' | 'leaderboard' | 'shop'>('home');
   const [showMenu, setShowMenu] = useState(false);
 
-  // Show login screen if not logged in
+  if (loading) return null; // Prevents the flash
   if (!user) return <Auth />;
 
   const hasGlow = inventory?.includes('red-glow');
 
   return (
     <div className="min-h-screen bg-[#0f0202] text-white font-sans selection:bg-red-500/30 overflow-x-hidden">
-      {/* Navbar */}
       <nav className="border-b border-white/5 bg-[#1a0505]/95 backdrop-blur-md px-6 py-2 flex items-center justify-between sticky top-0 z-50">
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="cursor-pointer" onClick={() => setActiveView('home')}>
           <img src="/candycane.png" alt="Logo" className="h-16 w-auto object-contain" />
@@ -71,14 +70,14 @@ function App() {
         <AnimatePresence mode="wait">
           {activeView === 'home' && (
             <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
-              <div className="relative overflow-hidden w-full h-72 bg-gradient-to-br from-red-600 via-red-500 to-rose-800 rounded-[3rem] p-12 flex flex-col justify-center shadow-2xl border-b-4 border-black/20">
+              <div className="relative overflow-hidden w-full h-80 bg-gradient-to-br from-red-600 via-red-500 to-rose-800 rounded-[3rem] p-12 flex flex-col justify-center shadow-2xl">
                 <h1 className="text-6xl font-black mb-2 uppercase italic tracking-tighter leading-none text-white drop-shadow-2xl">Sweet Wins <br/>Await You</h1>
                 <p className="text-white/60 font-bold text-xs tracking-[0.4em] uppercase">Provably Fair Candy Casino</p>
                 <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_40px,white_40px,white_80px)]" />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <GameCard title="Coinflip" desc="Double or Nothing" color="from-red-500 to-red-700" onClick={() => setActiveView('coinflip')} />
-                <GameCard title="Mines" desc="Don't Hit The Bomb" color="from-rose-500 to-rose-800" onClick={() => setActiveView('mines')} />
+                <GameCard title="Mines" desc="Avoid the Bombs" color="from-rose-500 to-rose-800" onClick={() => setActiveView('mines')} />
                 <GameCard title="Blackjack" desc="Candy 21" color="from-zinc-100 to-zinc-300" darkText onClick={() => setActiveView('blackjack')} />
               </div>
             </motion.div>
@@ -98,7 +97,7 @@ const MenuBtn = ({ icon, label, onClick, danger = false }: any) => (
   <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-colors ${danger ? 'text-red-500 hover:bg-red-500 hover:text-white' : 'hover:bg-white/5 text-white/70 hover:text-white'}`}>{icon} {label}</button>
 );
 const BackBtn = ({ onClick }: any) => (
-  <button onClick={onClick} className="flex items-center gap-2 text-white/30 hover:text-white font-black text-xs uppercase tracking-widest transition-colors mb-4"><LayoutDashboard size={16}/> Back to Lobby</button>
+  <button onClick={onClick} className="flex items-center gap-2 text-white/30 hover:text-white font-black text-xs uppercase tracking-widest transition-colors mb-4"><LayoutDashboard size={16}/> Lobby</button>
 );
 function GameCard({ title, desc, color, onClick, darkText = false }: any) {
   return (
@@ -106,7 +105,6 @@ function GameCard({ title, desc, color, onClick, darkText = false }: any) {
       <div className="flex items-center gap-2 mb-2 text-red-500/50 uppercase font-black text-[10px] tracking-widest italic"><Candy size={14} /> Candy Original</div>
       <h3 className={`text-4xl font-black italic uppercase tracking-tighter leading-none ${darkText ? 'text-black' : 'text-white'}`}>{title}</h3>
       <p className={`${darkText ? 'text-black/40' : 'text-white/60'} font-bold text-sm mt-1 uppercase`}>{desc}</p>
-      <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
     </motion.div>
   )
 }

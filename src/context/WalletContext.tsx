@@ -11,20 +11,20 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Check current session
+    // Initial Session Check
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) fetchProfile(session.user);
+      if (session?.user) syncProfile(session.user);
       else setLoading(false);
     });
 
-    // 2. Listen for login/logout
+    // Listen for Auth Events
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        fetchProfile(session.user);
-      } else if (event === 'SIGNED_OUT') {
+      if (session?.user) syncProfile(session.user);
+      else {
         setUser(null);
         setBalance(0);
         setIsOwner(false);
+        setInventory([]);
         setLoading(false);
       }
     });
@@ -32,30 +32,31 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     return () => authListener.subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userAuth: any) => {
+  const syncProfile = async (userAuth: any) => {
     setLoading(true);
     try {
+      // Try to get existing profile
       let { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userAuth.id)
         .single();
 
-      // IF PROFILE DOESN'T EXIST (THE BUG FIX)
+      // If it doesn't exist, CREATE IT ON THE FLY
       if (error || !data) {
         const username = userAuth.user_metadata?.username || userAuth.email.split('@')[0];
         const { data: newProfile, error: createError } = await supabase
           .from('profiles')
-          .insert([{ 
+          .upsert([{ 
             id: userAuth.id, 
-            username: username, 
+            username: username.toLowerCase(), 
             balance: 5000,
-            is_owner: username === 'cane'
-          }])
+            is_owner: username.toLowerCase() === 'cane'
+          }], { onConflict: 'id' })
           .select()
           .single();
         
-        if (createError) throw createError;
+        if (createError) console.error("Create Error:", createError);
         data = newProfile;
       }
 
@@ -66,7 +67,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         setInventory(data.inventory || []);
       }
     } catch (err) {
-      console.error("Profile Error:", err);
+      console.error("Critical Sync Error:", err);
     } finally {
       setLoading(false);
     }
