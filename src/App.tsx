@@ -6,19 +6,17 @@ import { Blackjack } from './components/Blackjack'
 import { Leaderboard } from './components/Leaderboard'
 import { Shop } from './components/Shop'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Wallet, Gamepad2, Candy, User as UserIcon, LayoutDashboard, Trophy, ShoppingBag, LogOut } from 'lucide-react'
+import { Wallet, Candy, User as UserIcon, LayoutDashboard, Trophy, ShoppingBag, LogOut } from 'lucide-react'
 
 function App() {
   const { balance, inventory } = useWallet();
   const [activeView, setActiveView] = useState<'home' | 'coinflip' | 'mines' | 'blackjack' | 'leaderboard' | 'shop'>('home');
   const [showMenu, setShowMenu] = useState(false);
 
-  // Check if user has bought the "Red Glow" item from shop
   const hasGlow = inventory.includes('red-glow');
 
   return (
     <div className="min-h-screen bg-[#0f0202] text-white font-sans selection:bg-red-500/30">
-      {/* Navbar */}
       <nav className="border-b border-white/5 bg-[#1a0505]/95 backdrop-blur-md px-6 py-2 flex items-center justify-between sticky top-0 z-50">
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="cursor-pointer" onClick={() => setActiveView('home')}>
           <img src="/candycane.png" alt="Logo" className="h-16 w-auto object-contain" />
@@ -34,7 +32,6 @@ function App() {
             <span className="font-black text-lg tracking-tight">${balance.toLocaleString()}</span>
           </motion.div>
 
-          {/* Profile Dropdown */}
           <div className="relative">
             <motion.div 
               whileTap={{ scale: 0.9 }}
@@ -67,7 +64,7 @@ function App() {
           {activeView === 'home' && (
             <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
               <div className="relative overflow-hidden w-full h-64 bg-gradient-to-br from-red-600 to-rose-800 rounded-[2.5rem] p-10 flex flex-col justify-center shadow-2xl">
-                <h1 className="text-5xl font-black mb-2 uppercase italic tracking-tighter leading-none">Sweet Wins <br/>Await You</h1>
+                <h1 className="text-5xl font-black mb-2 uppercase italic tracking-tighter leading-none text-white drop-shadow-xl">Sweet Wins <br/>Await You</h1>
                 <p className="text-white/60 font-bold text-xs tracking-[0.3em] uppercase">Provably Fair Candy Casino</p>
                 <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_40px,white_40px,white_80px)]" />
               </div>
