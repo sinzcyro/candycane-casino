@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { motion } from 'framer-motion';
-import { ShieldAlert, UserPlus, Coins, Search, Zap, MinusCircle, PlusCircle } from 'lucide-react';
+import { ShieldAlert, UserPlus, Coins, Search, Zap, Plus, Minus } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
 
-export const AdminTools = () => {
+export const AdminPanel = () => {
   const { balance, setExactBalance } = useWallet();
   const [targetUser, setTargetUser] = useState('');
   const [amount, setAmount] = useState(1000000);
@@ -47,19 +47,17 @@ export const AdminTools = () => {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-10">
-          {/* OWNER WALLET */}
           <div className="space-y-4 bg-black/40 p-6 rounded-3xl border border-white/5">
             <h3 className="font-black text-red-500 flex items-center gap-2 uppercase tracking-widest text-[10px]">
                <Zap size={14}/> Your Balance
             </h3>
             <input type="number" value={amount} onChange={e => setAmount(Number(e.target.value))} className="w-full bg-black p-4 rounded-xl border border-white/10 font-black text-2xl outline-none focus:border-red-500 text-white"/>
             <div className="flex gap-2">
-                <button onClick={() => handleSelfUpdate('add')} className="flex-1 bg-red-600 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2"> <PlusCircle size={18}/> ADD</button>
-                <button onClick={() => handleSelfUpdate('set')} className="flex-1 bg-white text-black font-black py-4 rounded-xl flex items-center justify-center gap-2"> <Coins size={18}/> SET</button>
+                <button onClick={() => handleSelfUpdate('add')} className="flex-1 bg-red-600 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-red-500 transition-colors"> <Plus size={18}/> ADD</button>
+                <button onClick={() => handleSelfUpdate('set')} className="flex-1 bg-white text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-200 transition-colors"> <Coins size={18}/> SET</button>
             </div>
           </div>
 
-          {/* MANAGE OTHERS */}
           <div className="space-y-4 bg-black/40 p-6 rounded-3xl border border-white/5">
             <h3 className="font-black text-red-500 flex items-center gap-2 uppercase tracking-widest text-[10px]">
                <UserPlus size={14}/> Manage Player
@@ -68,10 +66,9 @@ export const AdminTools = () => {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18}/>
                 <input type="text" placeholder="USERNAME" value={targetUser} onChange={e => setTargetUser(e.target.value)} className="w-full bg-black pl-12 p-4 rounded-xl border border-white/10 font-bold outline-none uppercase focus:border-red-500 text-white"/>
             </div>
-            <div className="flex gap-2 text-[10px]">
-                <button onClick={() => handleUserUpdate('give')} className="flex-1 bg-red-600 text-white font-black py-4 rounded-xl">GIVE</button>
-                <button onClick={() => handleUserUpdate('take')} className="flex-1 bg-zinc-800 text-white font-black py-4 rounded-xl">TAKE</button>
-                <button onClick={() => handleUserUpdate('set')} className="flex-1 bg-white text-black font-black py-4 rounded-xl">SET</button>
+            <div className="flex gap-2">
+                <button onClick={() => handleUserUpdate('give')} className="flex-1 bg-red-600 text-white font-black py-4 rounded-xl"> GIVE</button>
+                <button onClick={() => handleUserUpdate('take')} className="flex-1 bg-zinc-800 text-white font-black py-4 rounded-xl"> TAKE</button>
             </div>
           </div>
         </div>

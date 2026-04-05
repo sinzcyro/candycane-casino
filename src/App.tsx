@@ -4,7 +4,7 @@ import { Coinflip } from './components/Coinflip'
 import { Mines } from './components/Mines'
 import { Blackjack } from './components/Blackjack'
 import { Leaderboard } from './components/Leaderboard'
-import { AdminTools } from './components/Admintools'
+import { AdminPanel } from './components/AdminPanel'
 import { Auth } from './components/Auth'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Wallet, Candy, User as UserIcon, LayoutDashboard, Trophy, LogOut, Crown, ShieldAlert } from 'lucide-react'
@@ -41,7 +41,7 @@ function App() {
 
             <AnimatePresence>
               {showMenu && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-64 bg-[#1a0505] border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-2 z-[100] backdrop-blur-xl">
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-60 bg-[#1a0505] border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-2 z-[100] backdrop-blur-xl">
                   <div className="px-4 py-4 border-b border-white/5 mb-2 bg-white/5 rounded-2xl m-1">
                     <p className="font-black text-red-500 flex items-center gap-2 uppercase italic truncate text-lg">
                       {user.username} {isOwner && <Crown size={14} className="fill-red-500"/>}
@@ -49,7 +49,7 @@ function App() {
                   </div>
 
                   {isOwner && (
-                    <button onClick={() => {setActiveView('admin'); setShowMenu(false)}} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black bg-red-600 text-white uppercase transition-all mb-1">
+                    <button onClick={() => {setActiveView('admin'); setShowMenu(false)}} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black bg-red-600 text-white uppercase transition-all mb-1 shadow-lg shadow-red-600/20">
                       <ShieldAlert size={16}/> ADMIN TOOLS
                     </button>
                   )}
@@ -60,7 +60,7 @@ function App() {
                   
                   <div className="h-[1px] bg-white/5 my-2" />
                   
-                  <button onClick={() => signOut()} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black hover:bg-red-600 hover:text-white text-red-500 uppercase">
+                  <button onClick={() => signOut()} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black hover:bg-red-600 hover:text-white text-red-500 uppercase transition-colors">
                     <LogOut size={16}/> Logout
                   </button>
                 </motion.div>
@@ -91,7 +91,7 @@ function App() {
               {activeView === 'mines' && <div className="max-w-4xl mx-auto"><Mines /></div>}
               {activeView === 'blackjack' && <div className="max-w-3xl mx-auto"><Blackjack /></div>}
               {activeView === 'leaderboard' && <div className="max-w-2xl mx-auto"><Leaderboard /></div>}
-              {activeView === 'admin' && <div className="max-w-4xl mx-auto"><AdminTools /></div>}
+              {activeView === 'admin' && <div className="max-w-4xl mx-auto"><AdminPanel /></div>}
             </div>
           )}
         </AnimatePresence>
