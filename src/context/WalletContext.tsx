@@ -10,15 +10,13 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check session on load
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) fetchProfile(session.user);
+      if (session?.user) fetchProfile(session.user);
       else setLoading(false);
     });
 
-    // Listen for sign-in/sign-out
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) fetchProfile(session.user);
+      if (session?.user) fetchProfile(session.user);
       else {
         setUser(null);
         setBalance(0);
@@ -31,14 +29,13 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const fetchProfile = async (userAuth: any) => {
-    const { data, error } = await supabase.from('profiles').select('*').eq('id', userAuth.id).single();
-    
+    const { data } = await supabase.from('profiles').select('*').eq('id', userAuth.id).single();
     if (data) {
+      const username = data.username.toLowerCase();
       setUser({ ...userAuth, username: data.username });
       setBalance(data.balance);
-      setIsOwner(data.is_owner || data.username === 'cane');
-    } else if (error) {
-       console.error("Profile Fetch Error:", error);
+      // HARD LOCK: If name is 'cane', you ARE the owner.
+      setIsOwner(data.is_owner || username === 'cane');
     }
     setLoading(false);
   };
@@ -53,6 +50,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       user, balance, isOwner, loading,
       addWin: (amt: number) => updateBalance(balance + amt),
       removeBet: (amt: number) => updateBalance(balance - amt),
+      setExactBalance: (amt: number) => updateBalance(amt),
       signOut: () => supabase.auth.signOut()
     }}>
       {!loading && children}

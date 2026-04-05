@@ -19,7 +19,6 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#0f0202] text-white selection:bg-red-500/30 font-sans overflow-x-hidden">
-      {/* Navbar */}
       <nav className="border-b border-white/5 bg-[#1a0505]/95 backdrop-blur-md px-6 py-2 flex items-center justify-between sticky top-0 z-50">
         <motion.div whileHover={{ scale: 1.05 }} onClick={() => setActiveView('home')} className="cursor-pointer">
           <img src="/candycane.png" alt="Logo" className="h-16 w-auto" />
@@ -35,35 +34,34 @@ function App() {
             <motion.div 
               whileTap={{ scale: 0.9 }}
               onClick={() => setShowMenu(!showMenu)}
-              className={`w-10 h-10 rounded-full border flex items-center justify-center cursor-pointer transition-all ${isOwner ? 'bg-red-600 border-white shadow-[0_0_15px_rgba(239,68,68,0.5)]' : 'bg-[#2a0a0a] border-white/10'}`}
+              className={`w-10 h-10 rounded-full border flex items-center justify-center cursor-pointer transition-all ${isOwner ? 'bg-red-600 border-white shadow-[0_0_20px_rgba(239,68,68,0.5)]' : 'bg-[#2a0a0a] border-white/10'}`}
             >
               {isOwner ? <Crown size={20} className="text-white fill-white" /> : <UserIcon size={20} />}
             </motion.div>
 
             <AnimatePresence>
               {showMenu && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-60 bg-[#1a0505] border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-2 z-[100] backdrop-blur-xl">
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-64 bg-[#1a0505] border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-2 z-[100] backdrop-blur-xl">
                   <div className="px-4 py-4 border-b border-white/5 mb-2 bg-white/5 rounded-2xl m-1">
-                    <p className="font-black text-red-500 flex items-center gap-2 uppercase italic truncate">
-                      {user.username} {isOwner && <Crown size={12} />}
+                    <p className="font-black text-red-500 flex items-center gap-2 uppercase italic truncate text-lg">
+                      {user.username} {isOwner && <Crown size={14} className="fill-red-500"/>}
                     </p>
                   </div>
 
-                  {/* ONLY OWNER SEES THIS */}
                   {isOwner && (
-                    <button onClick={() => {setActiveView('admin'); setShowMenu(false)}} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black hover:bg-red-600 hover:text-white text-red-500 uppercase transition-all mb-1">
-                      <ShieldAlert size={16}/> Owner Tools
+                    <button onClick={() => {setActiveView('admin'); setShowMenu(false)}} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black bg-red-600 text-white uppercase transition-all mb-1 shadow-lg shadow-red-600/20">
+                      <ShieldAlert size={16}/> ADMIN TOOLS
                     </button>
                   )}
 
-                  <button onClick={() => {setActiveView('leaderboard'); setShowMenu(false)}} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black hover:bg-white/5 uppercase">
-                    <Trophy size={16} className="text-red-500" /> Leaderboard
+                  <button onClick={() => {setActiveView('leaderboard'); setShowMenu(false)}} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black hover:bg-white/5 uppercase transition-colors">
+                    <Trophy size={16} className="text-red-500" /> LEADERBOARD
                   </button>
                   
                   <div className="h-[1px] bg-white/5 my-2" />
                   
-                  <button onClick={() => signOut()} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black hover:bg-red-600 hover:text-white text-red-500 uppercase">
-                    <LogOut size={16}/> Logout
+                  <button onClick={() => signOut()} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black hover:bg-red-600 hover:text-white text-red-500 uppercase transition-colors">
+                    <LogOut size={16}/> LOGOUT
                   </button>
                 </motion.div>
               )}
@@ -76,7 +74,7 @@ function App() {
         <AnimatePresence mode="wait">
           {activeView === 'home' ? (
             <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12 py-10">
-              <div className="relative overflow-hidden w-full h-80 bg-gradient-to-br from-red-600 to-rose-800 rounded-[3rem] p-12 flex flex-col justify-center shadow-2xl border-b-4 border-black/20">
+              <div className="relative overflow-hidden w-full h-80 bg-gradient-to-br from-red-600 to-rose-800 rounded-[3rem] p-12 flex flex-col justify-center shadow-2xl">
                 <h1 className="text-7xl font-black mb-2 uppercase italic tracking-tighter leading-none text-white drop-shadow-2xl">Sweet Wins <br/>Await You</h1>
                 <p className="text-white/60 font-bold text-xs tracking-[0.4em] uppercase">Provably Fair Candy Casino</p>
                 <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_40px,white_40px,white_80px)]" />
@@ -89,7 +87,7 @@ function App() {
             </motion.div>
           ) : (
             <div className="space-y-6 pt-10">
-              <button onClick={() => setActiveView('home')} className="flex items-center gap-2 text-white/30 hover:text-white font-black text-xs uppercase transition-colors"><LayoutDashboard size={16}/> Lobby</button>
+              <button onClick={() => setActiveView('home')} className="flex items-center gap-2 text-white/30 hover:text-white font-black text-xs uppercase"><LayoutDashboard size={16}/> Lobby</button>
               {activeView === 'coinflip' && <div className="max-w-xl mx-auto"><Coinflip /></div>}
               {activeView === 'mines' && <div className="max-w-4xl mx-auto"><Mines /></div>}
               {activeView === 'blackjack' && <div className="max-w-3xl mx-auto"><Blackjack /></div>}
@@ -112,4 +110,4 @@ function GameCard({ title, color, onClick, darkText = false }: any) {
   )
 }
 
-export default App
+export default App;
