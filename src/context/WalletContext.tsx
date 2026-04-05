@@ -25,7 +25,6 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         setLoading(false);
       }
     });
-
     return () => authListener.subscription.unsubscribe();
   }, []);
 
@@ -34,8 +33,11 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     if (data) {
       setUser({ ...userAuth, username: data.username });
       setBalance(data.balance);
-      setIsOwner(data.is_owner || data.username === 'cane');
-      setLastClaim(data.last_daily_claim);
+      setIsOwner(data.is_owner || data.username.toLowerCase() === 'cane');
+      
+      // Fix for NaN: If the date is the "infinity" placeholder, treat it as null (ready to claim)
+      const claimDate = data.last_daily_claim;
+      setLastClaim(claimDate?.includes('1970') || claimDate?.includes('-infinity') ? null : claimDate);
     }
     setLoading(false);
   };

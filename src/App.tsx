@@ -17,23 +17,22 @@ function App() {
   const [timeLeft, setTimeLeft] = useState("");
   const [canClaim, setCanClaim] = useState(false);
 
-  // Timer Logic for Daily Reward
   useEffect(() => {
+    // If user has NEVER claimed, they can claim right now.
     if (!lastClaim) {
       setCanClaim(true);
       return;
     }
 
-    const timer = setInterval(() => {
+    const updateTimer = () => {
       const lastDate = new Date(lastClaim).getTime();
       const nextDate = lastDate + (24 * 60 * 60 * 1000);
       const now = new Date().getTime();
       const diff = nextDate - now;
 
-      if (diff <= 0) {
+      if (diff <= 0 || isNaN(diff)) {
         setCanClaim(true);
         setTimeLeft("");
-        clearInterval(timer);
       } else {
         setCanClaim(false);
         const h = Math.floor(diff / (1000 * 60 * 60));
@@ -41,14 +40,16 @@ function App() {
         const s = Math.floor((diff % (1000 * 60)) / 1000);
         setTimeLeft(`${h}h ${m}m ${s}s`);
       }
-    }, 1000);
+    };
 
-    return () => clearInterval(timer);
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
   }, [lastClaim]);
 
   const handleClaim = () => {
     claimDaily();
-    confetti({ particleCount: 200, spread: 70, origin: { y: 0.6 }, colors: ['#ff0000', '#ffffff'] });
+    confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 }, colors: ['#ff0000', '#ffffff'] });
   };
 
   if (loading) return null;
@@ -64,7 +65,7 @@ function App() {
         <div className="flex items-center gap-4">
           <div className="bg-[#2a0a0a] border border-red-500/20 px-4 py-2 rounded-xl flex items-center gap-3">
             <Wallet size={18} className="text-red-500" />
-            <span className="font-black text-lg tracking-tight">${balance?.toLocaleString()}</span>
+            <span className="font-black text-lg">${balance?.toLocaleString()}</span>
           </div>
 
           <div className="relative">
@@ -80,12 +81,12 @@ function App() {
               {showMenu && (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-64 bg-[#1a0505] border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-2 z-[100] backdrop-blur-xl">
                   <div className="px-4 py-4 border-b border-white/5 mb-2 bg-white/5 rounded-2xl m-1 text-center">
-                    <p className="font-black text-red-500 flex items-center justify-center gap-2 uppercase italic text-lg">
+                    <p className="font-black text-red-500 flex items-center justify-center gap-2 uppercase italic text-lg truncate">
                       {user.username} {isOwner && <Crown size={14} className="fill-red-500"/>}
                     </p>
                   </div>
                   {isOwner && (
-                    <button onClick={() => {setActiveView('admin'); setShowMenu(false)}} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black bg-red-600 text-white uppercase transition-all mb-1 shadow-lg shadow-red-600/20">
+                    <button onClick={() => {setActiveView('admin'); setShowMenu(false)}} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black bg-red-600 text-white uppercase transition-all mb-1">
                       <ShieldAlert size={16}/> ADMIN TOOLS
                     </button>
                   )}
@@ -107,13 +108,12 @@ function App() {
         <AnimatePresence mode="wait">
           {activeView === 'home' ? (
             <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10 py-6">
-              {/* Hero Banner */}
               <div className="relative overflow-hidden w-full h-72 bg-gradient-to-br from-red-600 to-rose-800 rounded-[3rem] p-12 flex flex-col justify-center shadow-2xl">
-                <h1 className="text-6xl font-black mb-2 uppercase italic tracking-tighter leading-none text-white drop-shadow-2xl text-center">Sweet Wins <br/>Await You</h1>
+                <h1 className="text-6xl font-black mb-2 uppercase italic tracking-tighter text-white drop-shadow-2xl text-center">Sweet Wins <br/>Await You</h1>
                 <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_40px,white_40px,white_80px)]" />
               </div>
 
-              {/* DAILY REWARD SECTION */}
+              {/* DAILY REWARD */}
               <div className="bg-[#1a0505] border border-white/5 p-6 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
                 <div className="flex items-center gap-4">
                   <div className={`p-4 rounded-2xl ${canClaim ? 'bg-red-600 shadow-[0_0_20px_rgba(239,68,68,0.4)] animate-bounce' : 'bg-white/5'}`}>
@@ -127,8 +127,7 @@ function App() {
 
                 {canClaim ? (
                   <motion.button 
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                     onClick={handleClaim}
                     className="bg-white text-black font-black px-10 py-4 rounded-2xl shadow-lg hover:bg-red-600 hover:text-white transition-all uppercase italic"
                   >
@@ -142,7 +141,6 @@ function App() {
                 )}
               </div>
 
-              {/* Games Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <GameCard title="Coinflip" color="from-red-500 to-red-700" onClick={() => setActiveView('coinflip')} />
                 <GameCard title="Mines" color="from-rose-500 to-rose-800" onClick={() => setActiveView('mines')} />
