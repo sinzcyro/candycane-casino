@@ -11,15 +11,20 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // 1. Check current session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) fetchProfile(session.user);
       else setLoading(false);
     });
 
+    // 2. Listen for login/logout
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session) fetchProfile(session.user);
-      else {
+      if (event === 'SIGNED_IN' && session) {
+        fetchProfile(session.user);
+      } else if (event === 'SIGNED_OUT') {
         setUser(null);
+        setBalance(0);
+        setIsOwner(false);
         setLoading(false);
       }
     });
@@ -28,23 +33,43 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const fetchProfile = async (userAuth: any) => {
-    let { data, error } = await supabase.from('profiles').select('*').eq('id', userAuth.id).single();
-    
-    // IF PROFILE MISSING, CREATE IT (Fixes the "Nothing Happens" bug)
-    if (error && error.code === 'PGRST116') {
-      const { data: newProfile } = await supabase.from('profiles').insert([
-        { id: userAuth.id, username: userAuth.email.split('@')[0], balance: 5000 }
-      ]).select().single();
-      data = newProfile;
-    }
+    setLoading(true);
+    try {
+      let { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userAuth.id)
+        .single();
 
-    if (data) {
-      setUser({ ...userAuth, username: data.username });
-      setBalance(data.balance);
-      setIsOwner(data.is_owner || data.username === 'cane');
-      setInventory(data.inventory || []);
+      // IF PROFILE DOESN'T EXIST (THE BUG FIX)
+      if (error || !data) {
+        const username = userAuth.user_metadata?.username || userAuth.email.split('@')[0];
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert([{ 
+            id: userAuth.id, 
+            username: username, 
+            balance: 5000,
+            is_owner: username === 'cane'
+          }])
+          .select()
+          .single();
+        
+        if (createError) throw createError;
+        data = newProfile;
+      }
+
+      if (data) {
+        setUser({ ...userAuth, username: data.username });
+        setBalance(data.balance);
+        setIsOwner(data.is_owner || data.username === 'cane');
+        setInventory(data.inventory || []);
+      }
+    } catch (err) {
+      console.error("Profile Error:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const updateBalance = async (newBalance: number) => {
