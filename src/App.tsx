@@ -17,6 +17,7 @@ import { Transfer } from './components/Transfer'
 import { About } from './components/About'
 import { Leaderboard } from './components/Leaderboard'
 import { AdminPanel } from './components/AdminPanel'
+import { Chat } from './components/Chat' // New Import
 import { Auth } from './components/Auth'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
@@ -62,21 +63,14 @@ function App() {
         </motion.div>
 
         <div className="flex items-center gap-4">
-          
-          {/* --- NEW HEALTH BAR --- */}
           <div className="hidden md:flex items-center gap-3 bg-[#2a0a0a] border border-red-500/20 px-4 py-2 rounded-xl shadow-lg min-w-[140px]">
             <Heart size={18} className="text-red-500 fill-red-500" />
             <div className="flex-1 h-2 bg-black/40 rounded-full overflow-hidden border border-white/5">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: `${(stats.hp / stats.maxHp) * 100}%` }}
-                className="h-full bg-red-600 shadow-[0_0_10px_rgba(239,68,68,0.5)]"
-              />
+              <motion.div animate={{ width: `${(stats.hp / stats.maxHp) * 100}%` }} className="h-full bg-red-600 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
             </div>
             <span className="text-[10px] font-black text-white/50">{stats.hp}</span>
           </div>
 
-          {/* BALANCE DISPLAY */}
           <div className="bg-[#2a0a0a] border border-red-500/20 px-4 py-2 rounded-xl flex items-center gap-3 shadow-lg">
             <Wallet size={18} className="text-red-500" />
             <span className="font-black text-lg tracking-tight">${balance?.toLocaleString()}</span>
@@ -105,41 +99,50 @@ function App() {
         </div>
       </nav>
 
-      <main className="max-w-6xl mx-auto p-6">
+      <main className="max-w-7xl mx-auto p-6">
         <AnimatePresence mode="wait">
           {activeView === 'home' ? (
             <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10 py-6">
-              <div className="relative overflow-hidden w-full h-80 bg-gradient-to-br from-red-600 to-rose-950 rounded-[3rem] p-12 flex flex-col justify-center shadow-2xl border-b-8 border-black/40">
-                <h1 className="text-7xl font-black mb-2 uppercase italic tracking-tighter text-white drop-shadow-2xl">SWEET WINS</h1>
-                <p className="text-white/60 font-bold text-sm tracking-[0.4em] uppercase mb-4">Provably Fair Candy Casino</p>
-                <div className="bg-white/10 w-fit px-6 py-2 rounded-full border border-white/20 backdrop-blur-md">
-                   <p className="text-white font-black text-xs uppercase tracking-widest animate-pulse">🎁 5 INVITES = 5 MILLION CANDY</p>
-                </div>
-                <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_40px,white_40px,white_80px)]" />
-              </div>
+              
+              <div className="grid lg:grid-cols-12 gap-8 items-start">
+                {/* Left Side: Games & Hero */}
+                <div className="lg:col-span-8 space-y-10">
+                    <div className="relative overflow-hidden w-full h-80 bg-gradient-to-br from-red-600 to-rose-950 rounded-[3rem] p-12 flex flex-col justify-center shadow-2xl">
+                        <h1 className="text-7xl font-black mb-2 uppercase italic tracking-tighter text-white drop-shadow-2xl">SWEET WINS</h1>
+                        <p className="text-white/60 font-bold text-sm tracking-[0.4em] uppercase mb-4">The Laboratory of Luck</p>
+                        <div className="bg-white/10 w-fit px-6 py-2 rounded-full border border-white/20 backdrop-blur-md">
+                            <p className="text-white font-black text-xs uppercase tracking-widest animate-pulse">🎁 5 INVITES = 5 MILLION CANDY</p>
+                        </div>
+                    </div>
 
-              {/* DAILY CLAIM */}
-              <div className="bg-[#1a0505] border border-white/5 p-6 rounded-[2.5rem] flex items-center justify-between shadow-xl">
-                <div className="flex items-center gap-4">
-                  <div className={`p-4 rounded-2xl ${canClaim ? 'bg-red-600 animate-bounce' : 'bg-white/5'}`}><Gift size={32} /></div>
-                  <div><h2 className="text-xl font-black italic uppercase">Daily Treat</h2><p className="text-white/40 text-xs font-bold uppercase">$15,000 Gift</p></div>
-                </div>
-                {canClaim ? <button onClick={() => {claimDaily(); confetti();}} className="bg-white text-black font-black px-10 py-4 rounded-2xl uppercase italic hover:bg-red-600 hover:text-white transition-all">Claim</button> : <div className="flex items-center gap-3 bg-black/40 px-6 py-4 rounded-2xl border border-white/5"><Clock size={18} className="text-red-500" /><span className="font-black text-white/50">{timeLeft}</span></div>}
-              </div>
+                    <div className="bg-[#1a0505] border border-white/5 p-6 rounded-[2.5rem] flex items-center justify-between shadow-xl">
+                        <div className="flex items-center gap-4">
+                            <div className={`p-4 rounded-2xl ${canClaim ? 'bg-red-600 animate-bounce shadow-lg shadow-red-600/30' : 'bg-white/5'}`}><Gift size={32} /></div>
+                            <div><h2 className="text-xl font-black italic uppercase">Daily Treat</h2><p className="text-white/40 text-xs font-bold uppercase">$15,000 Gift</p></div>
+                        </div>
+                        {canClaim ? <button onClick={() => {claimDaily(); confetti();}} className="bg-white text-black font-black px-10 py-4 rounded-2xl uppercase italic hover:bg-red-600 transition-all">Claim</button> : <div className="flex items-center gap-3 bg-black/40 px-6 py-4 rounded-2xl border border-white/5"><Clock size={18} className="text-red-500" /><span className="font-black text-white/50">{timeLeft}</span></div>}
+                    </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <GameCard title="PVP Arena" icon={<Swords/>} color="from-red-700 to-black" onClick={() => setActiveView('arena')} />
-                <GameCard title="Candy Shop" icon={<ShoppingBag/>} color="from-amber-500 to-orange-700" onClick={() => setActiveView('shop')} />
-                <GameCard title="Plinko" icon={<Target/>} color="from-red-400 to-red-600" onClick={() => setActiveView('plinko')} />
-                <GameCard title="Crash" icon={<Zap/>} color="from-orange-500 to-red-600" onClick={() => setActiveView('crash')} />
-                <GameCard title="Slots" icon={<Cherry/>} color="from-purple-600 to-pink-600" onClick={() => setActiveView('slots')} />
-                <GameCard title="Mines" icon={<Target/>} color="from-rose-500 to-rose-800" onClick={() => setActiveView('mines')} />
-                <GameCard title="Roulette" icon={<Disc/>} color="from-zinc-800 to-black" onClick={() => setActiveView('roulette')} />
-                <GameCard title="Blackjack" icon={<Candy/>} color="from-zinc-100 to-zinc-300" darkText onClick={() => setActiveView('blackjack')} />
-                <GameCard title="Coinflip" icon={<Disc/>} color="from-red-500 to-red-700" onClick={() => setActiveView('coinflip')} />
-                <GameCard title="Cups" icon={<Target/>} color="from-amber-500 to-orange-700" onClick={() => setActiveView('cups')} />
-                <GameCard title="Stack" icon={<Layers/>} color="from-blue-500 to-cyan-600" onClick={() => setActiveView('tower')} />
-                <GameCard title="Racing" icon={<FastForward/>} color="from-emerald-500 to-teal-700" onClick={() => setActiveView('race')} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <GameCard title="PVP Arena" icon={<Swords/>} color="from-red-700 to-black" onClick={() => setActiveView('arena')} />
+                        <GameCard title="Candy Shop" icon={<ShoppingBag/>} color="from-amber-500 to-orange-700" onClick={() => setActiveView('shop')} />
+                        <GameCard title="Plinko" icon={<Target/>} color="from-red-400 to-red-600" onClick={() => setActiveView('plinko')} />
+                        <GameCard title="Crash" icon={<Zap/>} color="from-orange-500 to-red-600" onClick={() => setActiveView('crash')} />
+                        <GameCard title="Slots" icon={<Cherry/>} color="from-purple-600 to-pink-600" onClick={() => setActiveView('slots')} />
+                        <GameCard title="Mines" icon={<Target/>} color="from-rose-500 to-rose-800" onClick={() => setActiveView('mines')} />
+                        <GameCard title="Roulette" icon={<Disc/>} color="from-zinc-800 to-black" onClick={() => setActiveView('roulette')} />
+                        <GameCard title="Blackjack" icon={<Candy/>} color="from-zinc-100 to-zinc-300" darkText onClick={() => setActiveView('blackjack')} />
+                        <GameCard title="Coinflip" icon={<Disc/>} color="from-red-500 to-red-700" onClick={() => setActiveView('coinflip')} />
+                        <GameCard title="Cups" icon={<Target/>} color="from-amber-500 to-orange-700" onClick={() => setActiveView('cups')} />
+                        <GameCard title="Stack" icon={<Layers/>} color="from-blue-500 to-cyan-600" onClick={() => setActiveView('tower')} />
+                        <GameCard title="Racing" icon={<FastForward/>} color="from-emerald-500 to-teal-700" onClick={() => setActiveView('race')} />
+                    </div>
+                </div>
+
+                {/* Right Side: GLOBAL CHAT */}
+                <div className="lg:col-span-4 sticky top-24">
+                    <Chat />
+                </div>
               </div>
             </motion.div>
           ) : (
@@ -162,6 +165,7 @@ function App() {
                 {activeView === 'leaderboard' && <Leaderboard />}
                 {activeView === 'admin' && <AdminPanel />}
                 {activeView === 'about' && <About />}
+                {activeView === 'transfer' && <Transfer />}
               </div>
             </div>
           )}
@@ -173,9 +177,9 @@ function App() {
 
 function GameCard({ title, icon, color, onClick, darkText = false }: any) {
   return (
-    <motion.div whileHover={{ scale: 1.05, y: -8 }} whileTap={{ scale: 0.98 }} onClick={onClick} className={`h-48 rounded-[2.5rem] bg-gradient-to-br ${color} p-8 cursor-pointer overflow-hidden shadow-2xl border-2 border-white/5 flex flex-col justify-between group transition-all`}>
+    <motion.div whileHover={{ scale: 1.02, y: -4 }} whileTap={{ scale: 0.98 }} onClick={onClick} className={`h-40 rounded-[2rem] bg-gradient-to-br ${color} p-6 cursor-pointer overflow-hidden shadow-2xl border border-white/5 flex flex-col justify-between group transition-all`}>
        <div className={`${darkText ? 'text-black/20' : 'text-white/20'}`}>{icon}</div>
-       <h3 className={`text-3xl font-black italic uppercase tracking-tighter ${darkText ? 'text-black' : 'text-white'}`}>{title}</h3>
+       <h3 className={`text-2xl font-black italic uppercase tracking-tighter ${darkText ? 'text-black' : 'text-white'}`}>{title}</h3>
     </motion.div>
   )
 }
