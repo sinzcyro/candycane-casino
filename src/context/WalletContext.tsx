@@ -9,6 +9,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [stats, setStats] = useState({ hp: 100, maxHp: 100, attack: 10, defense: 5 });
   const [inventory, setInventory] = useState<any[]>([]);
   const [isOwner, setIsOwner] = useState(false);
+  const [lastClaim, setLastClaim] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userAuth: any) => {
@@ -19,6 +20,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       setStats({ hp: data.hp, maxHp: data.max_hp, attack: data.attack, defense: data.defense });
       setInventory(data.inventory || []);
       setIsOwner(data.is_owner || data.username.toLowerCase() === 'cane');
+      setLastClaim(data.last_daily_claim === '-infinity' ? null : data.last_daily_claim);
     }
     setLoading(false);
   };
@@ -33,16 +35,29 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const updateProfile = async (updates: any) => {
     if (!user) return;
     const { error } = await supabase.from('profiles').update(updates).eq('id', user.id);
-    if (!error) await fetchProfile(user);
+    if (!error) {
+        // Update local state immediately for fast UI
+        if (updates.balance !== undefined) setBalance(updates.balance);
+        if (updates.last_daily_claim !== undefined) setLastClaim(updates.last_daily_claim);
+        if (updates.inventory !== undefined) setInventory(updates.inventory);
+        // Refresh full stats
+        fetchProfile(user);
+    }
   };
 
   return (
     <WalletContext.Provider value={{ 
-      user, balance, stats, inventory, isOwner, loading,
+      user, balance, stats, inventory, isOwner, loading, lastClaim,
       addWin: (amt: number) => updateProfile({ balance: balance + amt }),
       removeBet: (amt: number) => updateProfile({ balance: balance - amt }),
+      setExactBalance: (amt: number) => updateProfile({ balance: amt }),
       updateStats: (newStats: any) => updateProfile(newStats),
       updateInventory: (newInv: any[]) => updateProfile({ inventory: newInv }),
+      claimDaily: async () => {
+        const now = new Date().toISOString();
+        const newBal = balance + 15000;
+        await updateProfile({ balance: newBal, last_daily_claim: now });
+      },
       signOut: () => supabase.auth.signOut()
     }}>
       {!loading && children}
