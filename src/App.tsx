@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useWallet } from './context/WalletContext'
 import { Coinflip } from './components/Coinflip'
 import { Mines } from './components/Mines'
@@ -7,12 +7,49 @@ import { Leaderboard } from './components/Leaderboard'
 import { AdminPanel } from './components/AdminPanel'
 import { Auth } from './components/Auth'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Wallet, Candy, User as UserIcon, LayoutDashboard, Trophy, LogOut, Crown, ShieldAlert } from 'lucide-react'
+import { Wallet, Candy, User as UserIcon, LayoutDashboard, Trophy, LogOut, Crown, ShieldAlert, Gift, Clock } from 'lucide-react'
+import confetti from 'canvas-confetti'
 
 function App() {
-  const { user, balance, isOwner, signOut, loading } = useWallet();
+  const { user, balance, isOwner, signOut, loading, lastClaim, claimDaily } = useWallet();
   const [activeView, setActiveView] = useState('home');
   const [showMenu, setShowMenu] = useState(false);
+  const [timeLeft, setTimeLeft] = useState("");
+  const [canClaim, setCanClaim] = useState(false);
+
+  // Timer Logic for Daily Reward
+  useEffect(() => {
+    if (!lastClaim) {
+      setCanClaim(true);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      const lastDate = new Date(lastClaim).getTime();
+      const nextDate = lastDate + (24 * 60 * 60 * 1000);
+      const now = new Date().getTime();
+      const diff = nextDate - now;
+
+      if (diff <= 0) {
+        setCanClaim(true);
+        setTimeLeft("");
+        clearInterval(timer);
+      } else {
+        setCanClaim(false);
+        const h = Math.floor(diff / (1000 * 60 * 60));
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((diff % (1000 * 60)) / 1000);
+        setTimeLeft(`${h}h ${m}m ${s}s`);
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [lastClaim]);
+
+  const handleClaim = () => {
+    claimDaily();
+    confetti({ particleCount: 200, spread: 70, origin: { y: 0.6 }, colors: ['#ff0000', '#ffffff'] });
+  };
 
   if (loading) return null;
   if (!user) return <Auth />;
@@ -41,25 +78,21 @@ function App() {
 
             <AnimatePresence>
               {showMenu && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-60 bg-[#1a0505] border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-2 z-[100] backdrop-blur-xl">
-                  <div className="px-4 py-4 border-b border-white/5 mb-2 bg-white/5 rounded-2xl m-1">
-                    <p className="font-black text-red-500 flex items-center gap-2 uppercase italic truncate text-lg">
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-64 bg-[#1a0505] border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-2 z-[100] backdrop-blur-xl">
+                  <div className="px-4 py-4 border-b border-white/5 mb-2 bg-white/5 rounded-2xl m-1 text-center">
+                    <p className="font-black text-red-500 flex items-center justify-center gap-2 uppercase italic text-lg">
                       {user.username} {isOwner && <Crown size={14} className="fill-red-500"/>}
                     </p>
                   </div>
-
                   {isOwner && (
                     <button onClick={() => {setActiveView('admin'); setShowMenu(false)}} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black bg-red-600 text-white uppercase transition-all mb-1 shadow-lg shadow-red-600/20">
                       <ShieldAlert size={16}/> ADMIN TOOLS
                     </button>
                   )}
-
                   <button onClick={() => {setActiveView('leaderboard'); setShowMenu(false)}} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black hover:bg-white/5 transition-colors uppercase">
                     <Trophy size={16} className="text-red-500" /> Leaderboard
                   </button>
-                  
                   <div className="h-[1px] bg-white/5 my-2" />
-                  
                   <button onClick={() => signOut()} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black hover:bg-red-600 hover:text-white text-red-500 uppercase transition-colors">
                     <LogOut size={16}/> Logout
                   </button>
@@ -73,11 +106,43 @@ function App() {
       <main className="max-w-6xl mx-auto p-6">
         <AnimatePresence mode="wait">
           {activeView === 'home' ? (
-            <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12 py-10">
-              <div className="relative overflow-hidden w-full h-80 bg-gradient-to-br from-red-600 to-rose-800 rounded-[3rem] p-12 flex flex-col justify-center shadow-2xl">
-                <h1 className="text-7xl font-black mb-2 uppercase italic tracking-tighter leading-none text-white drop-shadow-2xl text-center">Sweet Wins <br/>Await You</h1>
+            <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10 py-6">
+              {/* Hero Banner */}
+              <div className="relative overflow-hidden w-full h-72 bg-gradient-to-br from-red-600 to-rose-800 rounded-[3rem] p-12 flex flex-col justify-center shadow-2xl">
+                <h1 className="text-6xl font-black mb-2 uppercase italic tracking-tighter leading-none text-white drop-shadow-2xl text-center">Sweet Wins <br/>Await You</h1>
                 <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_40px,white_40px,white_80px)]" />
               </div>
+
+              {/* DAILY REWARD SECTION */}
+              <div className="bg-[#1a0505] border border-white/5 p-6 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
+                <div className="flex items-center gap-4">
+                  <div className={`p-4 rounded-2xl ${canClaim ? 'bg-red-600 shadow-[0_0_20px_rgba(239,68,68,0.4)] animate-bounce' : 'bg-white/5'}`}>
+                    <Gift size={32} className={canClaim ? 'text-white' : 'text-white/20'} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-black italic uppercase tracking-tighter">Daily Treat</h2>
+                    <p className="text-white/40 text-xs font-bold uppercase tracking-widest">Get $15,000 every 24 hours</p>
+                  </div>
+                </div>
+
+                {canClaim ? (
+                  <motion.button 
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleClaim}
+                    className="bg-white text-black font-black px-10 py-4 rounded-2xl shadow-lg hover:bg-red-600 hover:text-white transition-all uppercase italic"
+                  >
+                    Claim 15k
+                  </motion.button>
+                ) : (
+                  <div className="flex items-center gap-3 bg-black/40 px-6 py-4 rounded-2xl border border-white/5">
+                    <Clock size={18} className="text-red-500" />
+                    <span className="font-black text-white/50">{timeLeft}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Games Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <GameCard title="Coinflip" color="from-red-500 to-red-700" onClick={() => setActiveView('coinflip')} />
                 <GameCard title="Mines" color="from-rose-500 to-rose-800" onClick={() => setActiveView('mines')} />

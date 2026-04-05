@@ -7,6 +7,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(null);
   const [balance, setBalance] = useState(0);
   const [isOwner, setIsOwner] = useState(false);
+  const [lastClaim, setLastClaim] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,11 +32,10 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchProfile = async (userAuth: any) => {
     const { data } = await supabase.from('profiles').select('*').eq('id', userAuth.id).single();
     if (data) {
-      const username = data.username.toLowerCase();
       setUser({ ...userAuth, username: data.username });
       setBalance(data.balance);
-      // HARD LOCK: If name is 'cane', you ARE the owner.
-      setIsOwner(data.is_owner || username === 'cane');
+      setIsOwner(data.is_owner || data.username === 'cane');
+      setLastClaim(data.last_daily_claim);
     }
     setLoading(false);
   };
@@ -45,12 +45,24 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     if (user) await supabase.from('profiles').update({ balance: newBalance }).eq('id', user.id);
   };
 
+  const claimDaily = async () => {
+    const now = new Date().toISOString();
+    const newBalance = balance + 15000;
+    setBalance(newBalance);
+    setLastClaim(now);
+    await supabase.from('profiles').update({ 
+      balance: newBalance, 
+      last_daily_claim: now 
+    }).eq('id', user.id);
+  };
+
   return (
     <WalletContext.Provider value={{ 
-      user, balance, isOwner, loading,
+      user, balance, isOwner, loading, lastClaim,
       addWin: (amt: number) => updateBalance(balance + amt),
       removeBet: (amt: number) => updateBalance(balance - amt),
       setExactBalance: (amt: number) => updateBalance(amt),
+      claimDaily,
       signOut: () => supabase.auth.signOut()
     }}>
       {!loading && children}
