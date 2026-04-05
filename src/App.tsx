@@ -87,7 +87,7 @@ function App() {
                 <h1 className="text-7xl font-black mb-2 uppercase italic tracking-tighter text-white">SWEET WINS</h1>
                 <p className="text-white/60 font-bold text-sm tracking-[0.4em] uppercase mb-4">Provably Fair Candy Casino</p>
                 <div className="bg-white/10 w-fit px-6 py-2 rounded-full border border-white/20 backdrop-blur-md">
-                   <p className="text-white font-black text-xs uppercase tracking-widest animate-pulse">🎁 5 INVITES = 5 MILLION CANDY</p>
+                   <p className="text-white font-black text-xs uppercase tracking-widest animate-pulse">🎁 5 DISCORD INVITES = 5 MILLION CANDY</p>
                 </div>
                 <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_40px,white_40px,white_80px)]" />
               </div>
