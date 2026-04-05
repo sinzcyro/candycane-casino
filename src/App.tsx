@@ -9,6 +9,7 @@ import { Roulette } from './components/Roulette'
 import { Cups } from './components/Cups'
 import { Tower } from './components/Tower'
 import { Race } from './components/Race'
+import { Plinko } from './components/Plinko'
 import { Leaderboard } from './components/Leaderboard'
 import { AdminPanel } from './components/AdminPanel'
 import { Auth } from './components/Auth'
@@ -16,7 +17,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Wallet, Candy, User as UserIcon, LayoutDashboard, Trophy, LogOut, Crown, ShieldAlert, Gift, Clock, Zap, Target, Disc, Layers, Cherry, FastForward } from 'lucide-react'
 import confetti from 'canvas-confetti'
 
-type ViewType = 'home' | 'coinflip' | 'mines' | 'blackjack' | 'crash' | 'slots' | 'roulette' | 'cups' | 'tower' | 'race' | 'leaderboard' | 'admin';
+type ViewType = 'home' | 'coinflip' | 'mines' | 'blackjack' | 'crash' | 'slots' | 'roulette' | 'cups' | 'tower' | 'race' | 'plinko' | 'leaderboard' | 'admin';
 
 function App() {
   const { user, balance, isOwner, signOut, loading, lastClaim, claimDaily } = useWallet();
@@ -63,11 +64,11 @@ function App() {
             </motion.div>
             <AnimatePresence>
               {showMenu && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-60 bg-[#1a0505] border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-2 z-[100]">
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-64 bg-[#1a0505] border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-2 z-[100]">
                   <div className="px-4 py-4 border-b border-white/5 mb-2 bg-white/5 rounded-2xl text-center">
-                    <p className="font-black text-red-500 flex items-center justify-center gap-2 uppercase italic truncate">{user.username} {isOwner && <Crown size={12} />}</p>
+                    <p className="font-black text-red-500 flex items-center justify-center gap-2 uppercase italic truncate text-lg">{user.username} {isOwner && <Crown size={14} />}</p>
                   </div>
-                  {isOwner && <button onClick={() => {setActiveView('admin'); setShowMenu(false)}} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black bg-red-600 text-white uppercase mb-1"><ShieldAlert size={16}/> ADMIN TOOLS</button>}
+                  {isOwner && <button onClick={() => {setActiveView('admin'); setShowMenu(false)}} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black bg-red-600 text-white uppercase mb-1 shadow-lg shadow-red-600/20"><ShieldAlert size={16}/> ADMIN TOOLS</button>}
                   <button onClick={() => {setActiveView('leaderboard'); setShowMenu(false)}} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black hover:bg-white/5 uppercase transition-colors"><Trophy size={16} className="text-red-500" /> Leaderboard</button>
                   <button onClick={() => signOut()} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black text-red-500 uppercase"><LogOut size={16}/> Logout</button>
                 </motion.div>
@@ -81,7 +82,7 @@ function App() {
         <AnimatePresence mode="wait">
           {activeView === 'home' ? (
             <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10 py-6">
-              <div className="relative overflow-hidden w-full h-64 bg-gradient-to-br from-red-600 to-rose-900 rounded-[3rem] p-12 flex flex-col justify-center shadow-2xl">
+              <div className="relative overflow-hidden w-full h-72 bg-gradient-to-br from-red-600 to-rose-900 rounded-[3rem] p-12 flex flex-col justify-center shadow-2xl">
                 <h1 className="text-6xl font-black mb-2 uppercase italic tracking-tighter text-white drop-shadow-2xl">CANDY SHOP</h1>
                 <p className="text-white/60 font-bold text-xs tracking-[0.4em] uppercase">The ultimate sweetness of winning</p>
                 <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_40px,white_40px,white_80px)]" />
@@ -90,19 +91,19 @@ function App() {
               {/* DAILY CLAIM */}
               <div className="bg-[#1a0505] border border-white/5 p-6 rounded-[2.5rem] flex items-center justify-between shadow-xl">
                 <div className="flex items-center gap-4">
-                  <div className={`p-4 rounded-2xl ${canClaim ? 'bg-red-600 animate-bounce' : 'bg-white/5'}`}><Gift size={32} /></div>
+                  <div className={`p-4 rounded-2xl ${canClaim ? 'bg-red-600 animate-bounce shadow-lg shadow-red-600/30' : 'bg-white/5'}`}><Gift size={32} /></div>
                   <div><h2 className="text-xl font-black italic uppercase">Daily Treat</h2><p className="text-white/40 text-xs font-bold uppercase">$15,000 Payout</p></div>
                 </div>
-                {canClaim ? <button onClick={() => {claimDaily(); confetti();}} className="bg-white text-black font-black px-10 py-4 rounded-2xl uppercase italic">Claim</button> : <div className="flex items-center gap-3 bg-black/40 px-6 py-4 rounded-2xl"><Clock size={18} className="text-red-500" /><span className="font-black text-white/50">{timeLeft}</span></div>}
+                {canClaim ? <button onClick={() => {claimDaily(); confetti();}} className="bg-white text-black font-black px-10 py-4 rounded-2xl uppercase italic hover:bg-red-600 hover:text-white transition-all shadow-xl">Claim</button> : <div className="flex items-center gap-3 bg-black/40 px-6 py-4 rounded-2xl border border-white/5"><Clock size={18} className="text-red-500" /><span className="font-black text-white/50">{timeLeft}</span></div>}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <GameCard title="Plinko" icon={<Target/>} color="from-red-400 to-red-600" onClick={() => setActiveView('plinko')} />
                 <GameCard title="Crash" icon={<Zap/>} color="from-orange-500 to-red-600" onClick={() => setActiveView('crash')} />
                 <GameCard title="Slots" icon={<Cherry/>} color="from-purple-600 to-pink-600" onClick={() => setActiveView('slots')} />
                 <GameCard title="Mines" icon={<Target/>} color="from-rose-500 to-rose-800" onClick={() => setActiveView('mines')} />
                 <GameCard title="Roulette" icon={<Disc/>} color="from-zinc-800 to-black" onClick={() => setActiveView('roulette')} />
                 <GameCard title="Blackjack" icon={<Candy/>} color="from-zinc-100 to-zinc-300" darkText onClick={() => setActiveView('blackjack')} />
-                <GameCard title="Coinflip" icon={<Zap/>} color="from-red-500 to-red-700" onClick={() => setActiveView('coinflip')} />
                 <GameCard title="Cups" icon={<Target/>} color="from-amber-500 to-orange-700" onClick={() => setActiveView('cups')} />
                 <GameCard title="Stack" icon={<Layers/>} color="from-blue-500 to-cyan-600" onClick={() => setActiveView('tower')} />
                 <GameCard title="Racing" icon={<FastForward/>} color="from-emerald-500 to-teal-700" onClick={() => setActiveView('race')} />
@@ -110,7 +111,7 @@ function App() {
             </motion.div>
           ) : (
             <div className="space-y-6 pt-6">
-              <button onClick={() => setActiveView('home')} className="flex items-center gap-2 text-white/30 hover:text-white font-black text-xs uppercase"><LayoutDashboard size={16}/> Lobby</button>
+              <button onClick={() => setActiveView('home')} className="flex items-center gap-2 text-white/30 hover:text-white font-black text-xs uppercase transition-colors"><LayoutDashboard size={16}/> Lobby</button>
               <div className="w-full">
                 {activeView === 'coinflip' && <Coinflip />}
                 {activeView === 'mines' && <Mines />}
@@ -121,6 +122,7 @@ function App() {
                 {activeView === 'cups' && <Cups />}
                 {activeView === 'tower' && <Tower />}
                 {activeView === 'race' && <Race />}
+                {activeView === 'plinko' && <Plinko />}
                 {activeView === 'leaderboard' && <Leaderboard />}
                 {activeView === 'admin' && <AdminPanel />}
               </div>
