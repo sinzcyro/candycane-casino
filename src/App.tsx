@@ -18,7 +18,7 @@ function App() {
   if (!user) return <Auth />;
 
   return (
-    <div className="min-h-screen bg-[#0f0202] text-white selection:bg-red-500/30 font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-[#0f0202] text-white selection:bg-red-500/30 font-sans">
       <nav className="border-b border-white/5 bg-[#1a0505]/95 backdrop-blur-md px-6 py-2 flex items-center justify-between sticky top-0 z-50">
         <motion.div whileHover={{ scale: 1.05 }} onClick={() => setActiveView('home')} className="cursor-pointer">
           <img src="/candycane.png" alt="Logo" className="h-16 w-auto" />
@@ -49,19 +49,19 @@ function App() {
                   </div>
 
                   {isOwner && (
-                    <button onClick={() => {setActiveView('admin'); setShowMenu(false)}} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black bg-red-600 text-white uppercase transition-all mb-1 shadow-lg shadow-red-600/20">
+                    <button onClick={() => {setActiveView('admin'); setShowMenu(false)}} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black bg-red-600 text-white uppercase transition-all mb-1">
                       <ShieldAlert size={16}/> ADMIN TOOLS
                     </button>
                   )}
 
-                  <button onClick={() => {setActiveView('leaderboard'); setShowMenu(false)}} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black hover:bg-white/5 uppercase transition-colors">
-                    <Trophy size={16} className="text-red-500" /> LEADERBOARD
+                  <button onClick={() => {setActiveView('leaderboard'); setShowMenu(false)}} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black hover:bg-white/5 transition-colors uppercase">
+                    <Trophy size={16} className="text-red-500" /> Leaderboard
                   </button>
                   
                   <div className="h-[1px] bg-white/5 my-2" />
                   
-                  <button onClick={() => signOut()} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black hover:bg-red-600 hover:text-white text-red-500 uppercase transition-colors">
-                    <LogOut size={16}/> LOGOUT
+                  <button onClick={() => signOut()} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black hover:bg-red-600 hover:text-white text-red-500 uppercase">
+                    <LogOut size={16}/> Logout
                   </button>
                 </motion.div>
               )}
@@ -75,8 +75,7 @@ function App() {
           {activeView === 'home' ? (
             <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12 py-10">
               <div className="relative overflow-hidden w-full h-80 bg-gradient-to-br from-red-600 to-rose-800 rounded-[3rem] p-12 flex flex-col justify-center shadow-2xl">
-                <h1 className="text-7xl font-black mb-2 uppercase italic tracking-tighter leading-none text-white drop-shadow-2xl">Sweet Wins <br/>Await You</h1>
-                <p className="text-white/60 font-bold text-xs tracking-[0.4em] uppercase">Provably Fair Candy Casino</p>
+                <h1 className="text-7xl font-black mb-2 uppercase italic tracking-tighter leading-none text-white drop-shadow-2xl text-center">Sweet Wins <br/>Await You</h1>
                 <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_40px,white_40px,white_80px)]" />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
