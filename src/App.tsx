@@ -13,7 +13,7 @@ function App() {
   const [activeView, setActiveView] = useState<'home' | 'coinflip' | 'mines' | 'blackjack' | 'leaderboard' | 'shop'>('home');
   const [showMenu, setShowMenu] = useState(false);
 
-  const hasGlow = inventory.includes('red-glow');
+  const hasGlow = inventory?.includes('red-glow');
 
   return (
     <div className="min-h-screen bg-[#0f0202] text-white font-sans selection:bg-red-500/30">
@@ -29,7 +29,7 @@ function App() {
             className={`bg-[#2a0a0a] border border-red-500/20 px-4 py-2 rounded-xl flex items-center gap-3 ${hasGlow ? 'shadow-[0_0_20px_rgba(239,68,68,0.3)] border-red-500' : ''}`}
           >
             <Wallet size={18} className="text-red-500" />
-            <span className="font-black text-lg tracking-tight">${balance.toLocaleString()}</span>
+            <span className="font-black text-lg tracking-tight">${balance?.toLocaleString()}</span>
           </motion.div>
 
           <div className="relative">
@@ -64,7 +64,7 @@ function App() {
           {activeView === 'home' && (
             <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
               <div className="relative overflow-hidden w-full h-64 bg-gradient-to-br from-red-600 to-rose-800 rounded-[2.5rem] p-10 flex flex-col justify-center shadow-2xl">
-                <h1 className="text-5xl font-black mb-2 uppercase italic tracking-tighter leading-none text-white drop-shadow-xl">Sweet Wins <br/>Await You</h1>
+                <h1 className="text-5xl font-black mb-2 uppercase italic tracking-tighter leading-none text-white">Sweet Wins <br/>Await You</h1>
                 <p className="text-white/60 font-bold text-xs tracking-[0.3em] uppercase">Provably Fair Candy Casino</p>
                 <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_40px,white_40px,white_80px)]" />
               </div>
@@ -101,6 +101,10 @@ const BackBtn = ({ onClick }: any) => (
 function GameCard({ title, desc, color, onClick, darkText = false }: any) {
   return (
     <motion.div whileHover={{ scale: 1.03, y: -5 }} whileTap={{ scale: 0.98 }} onClick={onClick} className={`h-64 rounded-[2rem] bg-gradient-to-br ${color} p-8 cursor-pointer overflow-hidden shadow-xl border-2 border-white/5`}>
+      <div className="flex items-center gap-2 mb-2 text-red-500/50">
+         <Candy size={18} />
+         <span className="text-[10px] font-black uppercase tracking-widest">Candy Original</span>
+      </div>
       <h3 className={`text-3xl font-black italic uppercase tracking-tighter leading-none ${darkText ? 'text-black' : 'text-white'}`}>{title}</h3>
       <p className={`${darkText ? 'text-black/50' : 'text-white/60'} font-bold text-sm mt-1 uppercase`}>{desc}</p>
     </motion.div>
