@@ -7,26 +7,44 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(null);
   const [balance, setBalance] = useState(0);
   const [isOwner, setIsOwner] = useState(false);
+  const [inventory, setInventory] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) fetchProfile(session.user);
+      else setLoading(false);
     });
 
-    supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) fetchProfile(session.user);
-      else setUser(null);
+      else {
+        setUser(null);
+        setLoading(false);
+      }
     });
+
+    return () => authListener.subscription.unsubscribe();
   }, []);
 
   const fetchProfile = async (userAuth: any) => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', userAuth.id).single();
+    let { data, error } = await supabase.from('profiles').select('*').eq('id', userAuth.id).single();
+    
+    // IF PROFILE MISSING, CREATE IT (Fixes the "Nothing Happens" bug)
+    if (error && error.code === 'PGRST116') {
+      const { data: newProfile } = await supabase.from('profiles').insert([
+        { id: userAuth.id, username: userAuth.email.split('@')[0], balance: 5000 }
+      ]).select().single();
+      data = newProfile;
+    }
+
     if (data) {
       setUser({ ...userAuth, username: data.username });
       setBalance(data.balance);
-      setIsOwner(data.is_owner || data.username === 'cane'); // Hardcoded owner check for you
+      setIsOwner(data.is_owner || data.username === 'cane');
+      setInventory(data.inventory || []);
     }
+    setLoading(false);
   };
 
   const updateBalance = async (newBalance: number) => {
@@ -36,16 +54,27 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const buyItem = async (itemId: string, price: number) => {
+    if (balance >= price && !inventory.includes(itemId)) {
+      const newInv = [...inventory, itemId];
+      const newBal = balance - price;
+      setBalance(newBal);
+      setInventory(newInv);
+      await supabase.from('profiles').update({ balance: newBal, inventory: newInv }).eq('id', user.id);
+      return true;
+    }
+    return false;
+  };
+
   return (
     <WalletContext.Provider value={{ 
-      user, 
-      balance, 
-      isOwner,
+      user, balance, isOwner, inventory, loading,
       addWin: (amt: number) => updateBalance(balance + amt),
       removeBet: (amt: number) => updateBalance(balance - amt),
+      buyItem,
       signOut: () => supabase.auth.signOut()
     }}>
-      {children}
+      {!loading && children}
     </WalletContext.Provider>
   );
 };
