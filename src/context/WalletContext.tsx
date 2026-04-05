@@ -18,12 +18,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) fetchProfile(session.user);
-      else {
-        setUser(null);
-        setBalance(0);
-        setIsOwner(false);
-        setLoading(false);
-      }
+      else { setUser(null); setBalance(0); setIsOwner(false); setLoading(false); }
     });
     return () => authListener.subscription.unsubscribe();
   }, []);
@@ -34,10 +29,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       setUser({ ...userAuth, username: data.username });
       setBalance(data.balance);
       setIsOwner(data.is_owner || data.username.toLowerCase() === 'cane');
-      
-      // Fix for NaN: If the date is the "infinity" placeholder, treat it as null (ready to claim)
-      const claimDate = data.last_daily_claim;
-      setLastClaim(claimDate?.includes('1970') || claimDate?.includes('-infinity') ? null : claimDate);
+      setLastClaim(data.last_daily_claim?.includes('1970') ? null : data.last_daily_claim);
     }
     setLoading(false);
   };
@@ -47,24 +39,19 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     if (user) await supabase.from('profiles').update({ balance: newBalance }).eq('id', user.id);
   };
 
-  const claimDaily = async () => {
-    const now = new Date().toISOString();
-    const newBalance = balance + 15000;
-    setBalance(newBalance);
-    setLastClaim(now);
-    await supabase.from('profiles').update({ 
-      balance: newBalance, 
-      last_daily_claim: now 
-    }).eq('id', user.id);
-  };
-
   return (
     <WalletContext.Provider value={{ 
       user, balance, isOwner, loading, lastClaim,
       addWin: (amt: number) => updateBalance(balance + amt),
       removeBet: (amt: number) => updateBalance(balance - amt),
       setExactBalance: (amt: number) => updateBalance(amt),
-      claimDaily,
+      claimDaily: async () => {
+        const now = new Date().toISOString();
+        const newBal = balance + 15000;
+        setBalance(newBal);
+        setLastClaim(now);
+        await supabase.from('profiles').update({ balance: newBal, last_daily_claim: now }).eq('id', user.id);
+      },
       signOut: () => supabase.auth.signOut()
     }}>
       {!loading && children}
