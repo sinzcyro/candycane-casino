@@ -17,7 +17,7 @@ export const Chat = () => {
     };
     fetchInitial();
 
-    const channel = supabase.channel('chat_v2')
+    const channel = supabase.channel('chat_v3')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, 
       (payload) => {
         setMessages(prev => [...prev, payload.new]);
@@ -33,14 +33,15 @@ export const Chat = () => {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !user) return;
+    // Safety check: Don't send if we don't have a username yet
+    if (!newMessage.trim() || !user || !user.username) return;
 
     const content = newMessage;
     setNewMessage('');
 
     const { error } = await supabase.from('messages').insert([{
       user_id: user.id,
-      username: user.username, // Using the fixed username from context
+      username: user.username, // FIXED: Now strictly uses user.username
       content: content,
       is_owner: isOwner
     }]);
@@ -56,11 +57,9 @@ export const Chat = () => {
       <div className="p-5 border-b border-white/5 flex items-center justify-between bg-red-600/5">
         <div className="flex items-center gap-3">
             <MessageSquare className="text-red-500" size={18} />
-            <h2 className="font-black italic uppercase tracking-widest text-xs text-white underline decoration-red-600 underline-offset-4">Live Lobby</h2>
+            <h2 className="font-black italic uppercase tracking-widest text-xs text-white">Lobby Chat</h2>
         </div>
-        <div className="flex items-center gap-1">
-            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-        </div>
+        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-4 scroll-smooth">
@@ -69,7 +68,7 @@ export const Chat = () => {
             <div className="flex items-center gap-2 mb-1">
               <span className={`text-[10px] font-black uppercase tracking-tighter flex items-center gap-1 ${msg.is_owner ? 'text-red-500' : 'text-white/30'}`}>
                 {msg.is_owner && <Crown size={10} className="fill-red-500" />}
-                {msg.username}
+                {msg.username || 'Anonymous'}
               </span>
             </div>
             <p className={`text-sm py-2 px-4 rounded-2xl w-fit max-w-[95%] break-words ${msg.is_owner ? 'bg-red-600 text-white font-bold border border-red-400/30' : 'bg-white/5 text-white/80'}`}>
@@ -82,12 +81,13 @@ export const Chat = () => {
       <form onSubmit={sendMessage} className="p-4 bg-black/40 flex gap-2">
         <input 
           type="text" 
-          placeholder="Type here..." 
-          className="flex-1 bg-black border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-red-600 transition-all text-white font-bold"
+          placeholder={user?.username ? "Say something..." : "Loading identity..."}
+          disabled={!user?.username}
+          className="flex-1 bg-black border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-red-600 transition-all text-white font-bold disabled:opacity-50"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
         />
-        <button type="submit" className="bg-red-600 p-3 rounded-xl hover:bg-red-500 transition-colors shadow-lg active:scale-90 text-white">
+        <button type="submit" disabled={!user?.username} className="bg-red-600 p-3 rounded-xl hover:bg-red-500 transition-colors shadow-lg active:scale-90 text-white disabled:opacity-50">
           <Send size={18} />
         </button>
       </form>
