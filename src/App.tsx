@@ -31,7 +31,7 @@ import confetti from 'canvas-confetti'
 type ViewType = 'home' | 'coinflip' | 'mines' | 'blackjack' | 'crash' | 'slots' | 'roulette' | 'cups' | 'tower' | 'race' | 'plinko' | 'transfer' | 'leaderboard' | 'admin' | 'about' | 'arena' | 'shop' | 'inventory' | 'explore';
 
 function App() {
-  const { user, balance, stats, isOwner, signOut, loading, lastClaim, claimDaily } = useWallet();
+  const { user, balance, stats, isOwner, signOut, lastClaim, claimDaily } = useWallet();
   const [activeView, setActiveView] = useState<ViewType>('home');
   const [showMenu, setShowMenu] = useState(false);
   const [timeLeft, setTimeLeft] = useState("");
@@ -53,12 +53,9 @@ function App() {
     return () => clearInterval(interval);
   }, [lastClaim]);
 
-  if (loading) return (
-    <div className="min-h-screen bg-[#0f0202] flex items-center justify-center">
-      <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-    </div>
-  );
+  // NO LOADING SCREEN. INSTANT RENDER.
   if (!user) return <Auth />;
+  (window as any).currentUsername = user.username;
 
   return (
     <div className="min-h-screen bg-[#0f0202] text-white selection:bg-red-500/30 font-sans pb-20 overflow-x-hidden">
@@ -70,7 +67,7 @@ function App() {
           <div className="hidden md:flex items-center gap-3 bg-[#2a0a0a] border border-red-500/20 px-4 py-2 rounded-xl shadow-lg min-w-[140px]">
             <Heart size={18} className="text-red-500 fill-red-500" />
             <div className="flex-1 h-2 bg-black/40 rounded-full border border-white/5 overflow-hidden">
-              <motion.div animate={{ width: `${Math.min(100, (stats.hp / stats.maxHp) * 100)}%` }} className="h-full bg-red-600 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
+              <motion.div animate={{ width: `${Math.min(100, (stats.hp / stats.maxHp) * 100)}%` }} className="h-full bg-red-600" />
             </div>
             <span className="text-[10px] font-black text-white/50">{stats.hp}</span>
           </div>
@@ -84,10 +81,8 @@ function App() {
             </motion.div>
             <AnimatePresence>
               {showMenu && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-64 bg-[#1a0505] border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-2 z-[100] backdrop-blur-xl">
-                  <div className="px-4 py-4 border-b border-white/5 mb-2 text-center font-black text-red-500 uppercase italic truncate text-lg">
-                    {user.username || 'Loading Profile...'}
-                  </div>
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-64 bg-[#1a0505] border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-2 z-[100]">
+                  <div className="px-4 py-4 border-b border-white/5 mb-2 text-center font-black text-red-500 uppercase italic truncate text-lg">{user.username || 'Loading Profile...'}</div>
                   <MenuBtn icon={<Package size={16}/>} label="MY VAULT" onClick={() => {setActiveView('inventory'); setShowMenu(false)}} />
                   <MenuBtn icon={<Map size={16}/>} label="WILD EXPLORE" onClick={() => {setActiveView('explore'); setShowMenu(false)}} />
                   <MenuBtn icon={<Swords size={16}/>} label="PVP ARENA" onClick={() => {setActiveView('arena'); setShowMenu(false)}} />
@@ -172,9 +167,9 @@ function App() {
 
 function GameCard({ title, icon, color, onClick, darkText = false }: any) {
   return (
-    <motion.div whileHover={{ scale: 1.03, y: -4 }} onClick={onClick} className={`h-40 rounded-[2.5rem] bg-gradient-to-br ${color} p-6 cursor-pointer shadow-2xl border border-white/5 flex flex-col justify-between group transition-all`}>
+    <motion.div whileHover={{ scale: 1.03, y: -4 }} onClick={onClick} className={`h-44 rounded-[2.5rem] bg-gradient-to-br ${color} p-8 cursor-pointer shadow-2xl border border-white/5 flex flex-col justify-between group transition-all`}>
        <div className={`${darkText ? 'text-black/20' : 'text-white/20'}`}>{icon}</div>
-       <h3 className={`text-2xl font-black italic uppercase tracking-tighter ${darkText ? 'text-black' : 'text-white'}`}>{title}</h3>
+       <h3 className={`text-3xl font-black italic uppercase tracking-tighter ${darkText ? 'text-black' : 'text-white'}`}>{title}</h3>
     </motion.div>
   )
 }
