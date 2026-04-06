@@ -10,16 +10,18 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [inventory, setInventory] = useState<any[]>([]);
   const [isOwner, setIsOwner] = useState(false);
   const [lastClaim, setLastClaim] = useState<string | null>(null);
+  const [lastExplore, setLastExplore] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
+  const syncProfile = async (userId: string) => {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
     if (data) {
-      // SET BALANCE & STATS
+      const cleanName = data.username.toLowerCase();
       setBalance(data.balance || 0);
       setInventory(data.inventory || []);
       setLastClaim(data.last_daily_claim === '-infinity' ? null : data.last_daily_claim);
-      setIsOwner(data.is_owner || data.username?.toLowerCase() === 'cane');
+      setLastExplore(data.last_explore === '-infinity' ? null : data.last_explore);
+      setIsOwner(data.is_owner || cleanName === 'cane');
       
       let atk = 10, def = 5;
       (data.inventory || []).forEach((item: any) => {
@@ -27,28 +29,24 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         if (item.type === 'armor') def += item.stat;
       });
       setStats({ hp: data.hp || 100, maxHp: data.max_hp || 100, attack: atk, defense: def });
-      
       return data;
     }
     return null;
   };
 
   useEffect(() => {
-    const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        const profile = await fetchProfile(session.user.id);
-        // Force the username from the DB into the user state
-        setUser({ ...session.user, username: profile?.username || 'Player' });
+        syncProfile(session.user.id).then((profile) => {
+          setUser({ ...session.user, username: profile?.username || 'Player' });
+        });
       }
       setLoading(false);
-    };
-
-    init();
+    });
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        const profile = await fetchProfile(session.user.id);
+        const profile = await syncProfile(session.user.id);
         setUser({ ...session.user, username: profile?.username || 'Player' });
       } else {
         setUser(null);
@@ -62,14 +60,13 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const updateProfile = async (updates: any) => {
     if (!user) return;
     if (updates.balance !== undefined) setBalance(updates.balance);
-    await supabase.from('profiles').update(updates).eq('id', user.id);
-    // Background refresh
-    fetchProfile(user.id);
+    const { error } = await supabase.from('profiles').update(updates).eq('id', user.id);
+    if (!error) syncProfile(user.id);
   };
 
   return (
     <WalletContext.Provider value={{ 
-      user, balance, stats, inventory, isOwner, loading, lastClaim,
+      user, balance, stats, inventory, isOwner, loading, lastClaim, lastExplore,
       addWin: (amt: number) => updateProfile({ balance: balance + amt }),
       removeBet: (amt: number) => updateProfile({ balance: balance - amt }),
       setExactBalance: (amt: number) => updateProfile({ balance: amt }),
@@ -78,6 +75,11 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       claimDaily: async () => {
         const now = new Date().toISOString();
         await updateProfile({ balance: balance + 15000, last_daily_claim: now });
+      },
+      exploreWorld: async (foundItem: any) => {
+        const now = new Date().toISOString();
+        const newInv = [...inventory, foundItem];
+        await updateProfile({ inventory: newInv, last_explore: now });
       },
       sellItem: async (index: number, price: number) => {
         const newInv = [...inventory];
