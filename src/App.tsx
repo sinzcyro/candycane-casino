@@ -61,7 +61,7 @@ function App() {
     );
   }
 
-  if (!user) return <Auth />;
+  if (!user && !loading) return <Auth />;
 
   return (
     <div className="min-h-screen bg-[#0f0202] text-white selection:bg-red-500/30 font-sans pb-20 overflow-x-hidden">
