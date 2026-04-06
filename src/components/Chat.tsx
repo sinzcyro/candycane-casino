@@ -17,7 +17,7 @@ export const Chat = () => {
     };
     fetchInitial();
 
-    const channel = supabase.channel('chat_v3')
+    const channel = supabase.channel('chat_final')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, 
       (payload) => {
         setMessages(prev => [...prev, payload.new]);
@@ -33,23 +33,17 @@ export const Chat = () => {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Safety check: Don't send if we don't have a username yet
     if (!newMessage.trim() || !user || !user.username) return;
 
     const content = newMessage;
     setNewMessage('');
 
-    const { error } = await supabase.from('messages').insert([{
+    await supabase.from('messages').insert([{
       user_id: user.id,
-      username: user.username, // FIXED: Now strictly uses user.username
+      username: user.username,
       content: content,
       is_owner: isOwner
     }]);
-
-    if (error) {
-      console.error(error);
-      setNewMessage(content);
-    }
   };
 
   return (
@@ -57,9 +51,9 @@ export const Chat = () => {
       <div className="p-5 border-b border-white/5 flex items-center justify-between bg-red-600/5">
         <div className="flex items-center gap-3">
             <MessageSquare className="text-red-500" size={18} />
-            <h2 className="font-black italic uppercase tracking-widest text-xs text-white">Lobby Chat</h2>
+            <h2 className="font-black italic uppercase tracking-widest text-xs text-white">Live Lobby</h2>
         </div>
-        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-4 scroll-smooth">
@@ -68,10 +62,10 @@ export const Chat = () => {
             <div className="flex items-center gap-2 mb-1">
               <span className={`text-[10px] font-black uppercase tracking-tighter flex items-center gap-1 ${msg.is_owner ? 'text-red-500' : 'text-white/30'}`}>
                 {msg.is_owner && <Crown size={10} className="fill-red-500" />}
-                {msg.username || 'Anonymous'}
+                {msg.username}
               </span>
             </div>
-            <p className={`text-sm py-2 px-4 rounded-2xl w-fit max-w-[95%] break-words ${msg.is_owner ? 'bg-red-600 text-white font-bold border border-red-400/30' : 'bg-white/5 text-white/80'}`}>
+            <p className={`text-sm py-2 px-4 rounded-2xl w-fit max-w-[95%] break-words ${msg.is_owner ? 'bg-red-600 text-white font-bold' : 'bg-white/5 text-white/80'}`}>
               {msg.content}
             </p>
           </motion.div>
@@ -81,9 +75,8 @@ export const Chat = () => {
       <form onSubmit={sendMessage} className="p-4 bg-black/40 flex gap-2">
         <input 
           type="text" 
-          placeholder={user?.username ? "Say something..." : "Loading identity..."}
-          disabled={!user?.username}
-          className="flex-1 bg-black border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-red-600 transition-all text-white font-bold disabled:opacity-50"
+          placeholder={user?.username ? "Type a message..." : "Syncing identity..."}
+          className="flex-1 bg-black border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-red-600 transition-all text-white font-bold"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
         />

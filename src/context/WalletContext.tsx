@@ -11,13 +11,14 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [isOwner, setIsOwner] = useState(false);
   const [lastClaim, setLastClaim] = useState<string | null>(null);
 
-  const refresh = async (id: string) => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', id).single();
+  const sync = async (id: string) => {
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', id).single();
     if (data) {
       setBalance(data.balance || 0);
       setInventory(data.inventory || []);
       setLastClaim(data.last_daily_claim === '-infinity' ? null : data.last_daily_claim);
       setIsOwner(data.is_owner || data.username?.toLowerCase() === 'cane');
+      
       let atk = 10, def = 5;
       (data.inventory || []).forEach((i: any) => {
         if (i.type === 'weapon') atk += i.stat;
@@ -30,21 +31,25 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
+    // Initial Sync
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        setUser(session.user);
-        refresh(session.user.id).then(p => setUser((prev: any) => ({ ...prev, username: p?.username })));
+        sync(session.user.id).then(profile => {
+          setUser({ ...session.user, username: profile?.username });
+        });
       }
     });
+
+    // Auth Listener
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        setUser(session.user);
-        const p = await refresh(session.user.id);
-        setUser((prev: any) => ({ ...prev, username: p?.username }));
+        const profile = await sync(session.user.id);
+        setUser({ ...session.user, username: profile?.username });
       } else {
         setUser(null);
       }
     });
+
     return () => authListener.subscription.unsubscribe();
   }, []);
 
@@ -52,7 +57,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     if (!user) return;
     if (ups.balance !== undefined) setBalance(ups.balance);
     await supabase.from('profiles').update(ups).eq('id', user.id);
-    refresh(user.id);
+    sync(user.id);
   };
 
   return (
