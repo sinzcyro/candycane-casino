@@ -10,31 +10,16 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [inventory, setInventory] = useState<any[]>([]);
   const [isOwner, setIsOwner] = useState(false);
   const [lastClaim, setLastClaim] = useState<string | null>(null);
+  const [lastExplore, setLastExplore] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
-      
-      if (error && error.code === 'PGRST116') {
-        // Profile missing - Create it
-        const { data: newProfile } = await supabase.from('profiles').insert([
-          { id: userId, username: 'player_' + userId.slice(0, 5), balance: 5000 }
-        ]).select().single();
-        return newProfile;
-      }
-      return data;
-    } catch (e) {
-      console.error("Profile fetch error", e);
-      return null;
-    }
-  };
-
-  const syncState = (profile: any) => {
+  // Helper to sync local state with a profile object
+  const syncLocalState = (profile: any) => {
     if (!profile) return;
-    setBalance(profile.balance);
+    setBalance(profile.balance || 0);
     setInventory(profile.inventory || []);
     setLastClaim(profile.last_daily_claim === '-infinity' ? null : profile.last_daily_claim);
+    setLastExplore(profile.last_explore === '-infinity' ? null : profile.last_explore);
     setIsOwner(profile.is_owner || profile.username?.toLowerCase() === 'cane');
     
     let atk = 10, def = 5;
@@ -45,52 +30,73 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     setStats({ hp: profile.hp || 100, maxHp: profile.max_hp || 100, attack: atk, defense: def });
   };
 
+  const fetchAndSync = async (userId: string) => {
+    try {
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+      if (data) {
+        syncLocalState(data);
+        return data;
+      }
+      // If profile missing, the logic in App/Auth will handle creation or we can upsert here
+      return null;
+    } catch (e) {
+      return null;
+    }
+  };
+
   useEffect(() => {
-    const init = async () => {
+    // Safety Timeout: Force stop loading after 4 seconds no matter what
+    const timer = setTimeout(() => setLoading(false), 4000);
+
+    const initAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
-          const profile = await fetchProfile(session.user.id);
-          setUser({ ...session.user, username: profile?.username });
-          syncState(profile);
+          const profile = await fetchAndSync(session.user.id);
+          setUser({ ...session.user, username: profile?.username || session.user.email?.split('@')[0] });
 
-          // LIVE UPDATE LISTENER
-          supabase.channel(`realtime_profile_${session.user.id}`)
+          // Realtime Listener
+          supabase.channel(`any_profile_${session.user.id}`)
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${session.user.id}` }, 
-            (payload) => syncState(payload.new))
+            (payload) => syncLocalState(payload.new))
             .subscribe();
         }
       } catch (e) {
-        console.error("Initialization error", e);
+        console.error("Auth init error", e);
       } finally {
         setLoading(false);
+        clearTimeout(timer);
       }
     };
 
-    init();
+    initAuth();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        const profile = await fetchProfile(session.user.id);
-        setUser({ ...session.user, username: profile?.username });
-        syncState(profile);
-      } else if (event === 'SIGNED_OUT') {
+      if (session?.user) {
+        const profile = await fetchAndSync(session.user.id);
+        setUser({ ...session.user, username: profile?.username || session.user.email?.split('@')[0] });
+      } else {
         setUser(null);
       }
       setLoading(false);
     });
 
-    return () => authListener.subscription.unsubscribe();
+    return () => {
+      authListener.subscription.unsubscribe();
+      clearTimeout(timer);
+    };
   }, []);
 
   const updateProfile = async (updates: any) => {
     if (!user) return;
+    // Optimistic UI update
+    if (updates.balance !== undefined) setBalance(updates.balance);
     await supabase.from('profiles').update(updates).eq('id', user.id);
   };
 
   return (
     <WalletContext.Provider value={{ 
-      user, balance, stats, inventory, isOwner, loading, lastClaim,
+      user, balance, stats, inventory, isOwner, loading, lastClaim, lastExplore,
       addWin: (amt: number) => updateProfile({ balance: balance + amt }),
       removeBet: (amt: number) => updateProfile({ balance: balance - amt }),
       setExactBalance: (amt: number) => updateProfile({ balance: amt }),
@@ -98,6 +104,15 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       claimDaily: async () => {
         const now = new Date().toISOString();
         await updateProfile({ balance: balance + 15000, last_daily_claim: now });
+      },
+      exploreWorld: async (foundItem: any) => {
+        const now = new Date().toISOString();
+        await updateProfile({ inventory: [...inventory, foundItem], last_explore: now });
+      },
+      sellItem: async (index: number, price: number) => {
+        const newInv = [...inventory];
+        newInv.splice(index, 1);
+        await updateProfile({ inventory: newInv, balance: balance + price });
       },
       signOut: () => supabase.auth.signOut()
     }}>
