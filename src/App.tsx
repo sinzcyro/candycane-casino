@@ -17,7 +17,7 @@ import { Transfer } from './components/Transfer'
 import { About } from './components/About'
 import { Leaderboard } from './components/Leaderboard'
 import { AdminPanel } from './components/AdminPanel'
-import { Chat } from './components/Chat' // New Import
+import { Chat } from './components/Chat'
 import { Auth } from './components/Auth'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
@@ -63,6 +63,7 @@ function App() {
         </motion.div>
 
         <div className="flex items-center gap-4">
+          {/* Health Bar */}
           <div className="hidden md:flex items-center gap-3 bg-[#2a0a0a] border border-red-500/20 px-4 py-2 rounded-xl shadow-lg min-w-[140px]">
             <Heart size={18} className="text-red-500 fill-red-500" />
             <div className="flex-1 h-2 bg-black/40 rounded-full overflow-hidden border border-white/5">
@@ -85,13 +86,18 @@ function App() {
               {showMenu && (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-64 bg-[#1a0505] border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-2 z-[100]">
                   <div className="px-4 py-4 border-b border-white/5 mb-2 text-center font-black text-red-500 uppercase italic truncate text-lg">{user.username}</div>
+                  
                   <MenuBtn icon={<Package size={16}/>} label="MY VAULT" onClick={() => {setActiveView('inventory'); setShowMenu(false)}} />
                   <MenuBtn icon={<Swords size={16}/>} label="PVP ARENA" onClick={() => {setActiveView('arena'); setShowMenu(false)}} />
                   <MenuBtn icon={<ShoppingBag size={16}/>} label="CANDY SHOP" onClick={() => {setActiveView('shop'); setShowMenu(false)}} />
+                  
                   <div className="h-[1px] bg-white/5 my-1" />
+                  <MenuBtn icon={<Send size={16} className="text-red-500" />} label="TRANSFER MONEY" onClick={() => {setActiveView('transfer'); setShowMenu(false)}} />
+                  <MenuBtn icon={<Trophy size={16} className="text-red-500" />} label="LEADERBOARD" onClick={() => {setActiveView('leaderboard'); setShowMenu(false)}} />
                   {isOwner && <MenuBtn icon={<ShieldAlert size={16}/>} label="ADMIN TOOLS" onClick={() => {setActiveView('admin'); setShowMenu(false)}} />}
-                  <MenuBtn icon={<Trophy size={16}/>} label="LEADERBOARD" onClick={() => {setActiveView('leaderboard'); setShowMenu(false)}} />
-                  <button onClick={() => signOut()} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black text-red-500 uppercase hover:bg-red-600 hover:text-white transition-all"><LogOut size={16}/> Logout</button>
+                  
+                  <div className="h-[1px] bg-white/5 my-1" />
+                  <button onClick={() => signOut()} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black text-red-500 hover:bg-red-600 hover:text-white transition-all"><LogOut size={16}/> Logout</button>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -105,22 +111,22 @@ function App() {
             <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10 py-6">
               
               <div className="grid lg:grid-cols-12 gap-8 items-start">
-                {/* Left Side: Games & Hero */}
                 <div className="lg:col-span-8 space-y-10">
-                    <div className="relative overflow-hidden w-full h-80 bg-gradient-to-br from-red-600 to-rose-950 rounded-[3rem] p-12 flex flex-col justify-center shadow-2xl">
-                        <h1 className="text-7xl font-black mb-2 uppercase italic tracking-tighter text-white drop-shadow-2xl">SWEET WINS</h1>
-                        <p className="text-white/60 font-bold text-sm tracking-[0.4em] uppercase mb-4">The Laboratory of Luck</p>
+                    <div className="relative overflow-hidden w-full h-80 bg-gradient-to-br from-red-600 to-rose-950 rounded-[3rem] p-12 flex flex-col justify-center shadow-2xl border-b-8 border-black/40">
+                        <h1 className="text-7xl font-black mb-2 uppercase italic tracking-tighter text-white drop-shadow-2xl leading-none">SWEET <br/>WINS</h1>
+                        <p className="text-white/60 font-bold text-sm tracking-[0.4em] uppercase mb-4">Provably Fair Candy Casino</p>
                         <div className="bg-white/10 w-fit px-6 py-2 rounded-full border border-white/20 backdrop-blur-md">
                             <p className="text-white font-black text-xs uppercase tracking-widest animate-pulse">🎁 5 INVITES = 5 MILLION CANDY</p>
                         </div>
                     </div>
 
-                    <div className="bg-[#1a0505] border border-white/5 p-6 rounded-[2.5rem] flex items-center justify-between shadow-xl">
+                    {/* Daily Claim */}
+                    <div className="bg-[#1a0505] border border-white/5 p-6 rounded-[2.5rem] flex items-center justify-between shadow-xl border-l-4 border-l-red-600">
                         <div className="flex items-center gap-4">
-                            <div className={`p-4 rounded-2xl ${canClaim ? 'bg-red-600 animate-bounce shadow-lg shadow-red-600/30' : 'bg-white/5'}`}><Gift size={32} /></div>
-                            <div><h2 className="text-xl font-black italic uppercase">Daily Treat</h2><p className="text-white/40 text-xs font-bold uppercase">$15,000 Gift</p></div>
+                            <div className={`p-4 rounded-2xl ${canClaim ? 'bg-red-600 animate-bounce' : 'bg-white/5'}`}><Gift size={32} /></div>
+                            <div><h2 className="text-xl font-black italic uppercase">Daily Treat</h2><p className="text-white/40 text-xs font-bold uppercase">$15,000 Payout</p></div>
                         </div>
-                        {canClaim ? <button onClick={() => {claimDaily(); confetti();}} className="bg-white text-black font-black px-10 py-4 rounded-2xl uppercase italic hover:bg-red-600 transition-all">Claim</button> : <div className="flex items-center gap-3 bg-black/40 px-6 py-4 rounded-2xl border border-white/5"><Clock size={18} className="text-red-500" /><span className="font-black text-white/50">{timeLeft}</span></div>}
+                        {canClaim ? <button onClick={() => {claimDaily(); confetti();}} className="bg-white text-black font-black px-10 py-4 rounded-2xl uppercase italic hover:bg-red-600 transition-all shadow-xl">Claim</button> : <div className="flex items-center gap-3 bg-black/40 px-6 py-4 rounded-2xl border border-white/5"><Clock size={18} className="text-red-500" /><span className="font-black text-white/50">{timeLeft}</span></div>}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -139,7 +145,7 @@ function App() {
                     </div>
                 </div>
 
-                {/* Right Side: GLOBAL CHAT */}
+                {/* Right Side: Global Chat */}
                 <div className="lg:col-span-4 sticky top-24">
                     <Chat />
                 </div>
@@ -163,9 +169,9 @@ function App() {
                 {activeView === 'race' && <Race />}
                 {activeView === 'plinko' && <Plinko />}
                 {activeView === 'leaderboard' && <Leaderboard />}
+                {activeView === 'transfer' && <Transfer />}
                 {activeView === 'admin' && <AdminPanel />}
                 {activeView === 'about' && <About />}
-                {activeView === 'transfer' && <Transfer />}
               </div>
             </div>
           )}
@@ -177,16 +183,16 @@ function App() {
 
 function GameCard({ title, icon, color, onClick, darkText = false }: any) {
   return (
-    <motion.div whileHover={{ scale: 1.02, y: -4 }} whileTap={{ scale: 0.98 }} onClick={onClick} className={`h-40 rounded-[2rem] bg-gradient-to-br ${color} p-6 cursor-pointer overflow-hidden shadow-2xl border border-white/5 flex flex-col justify-between group transition-all`}>
+    <motion.div whileHover={{ scale: 1.03, y: -4 }} whileTap={{ scale: 0.98 }} onClick={onClick} className={`h-44 rounded-[2.5rem] bg-gradient-to-br ${color} p-8 cursor-pointer overflow-hidden shadow-2xl border border-white/5 flex flex-col justify-between group transition-all`}>
        <div className={`${darkText ? 'text-black/20' : 'text-white/20'}`}>{icon}</div>
-       <h3 className={`text-2xl font-black italic uppercase tracking-tighter ${darkText ? 'text-black' : 'text-white'}`}>{title}</h3>
+       <h3 className={`text-3xl font-black italic uppercase tracking-tighter ${darkText ? 'text-black' : 'text-white'}`}>{title}</h3>
     </motion.div>
   )
 }
 
 function MenuBtn({ icon, label, onClick }: any) {
   return (
-    <button onClick={onClick} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black text-white/70 hover:bg-white/5 hover:text-white uppercase transition-colors">
+    <button onClick={onClick} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black text-white/70 hover:bg-white/5 hover:text-white uppercase transition-all">
       {icon} {label}
     </button>
   );
