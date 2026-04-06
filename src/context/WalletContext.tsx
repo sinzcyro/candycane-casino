@@ -10,9 +10,10 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [inventory, setInventory] = useState<any[]>([]);
   const [isOwner, setIsOwner] = useState(false);
   const [lastClaim, setLastClaim] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const sync = async (id: string) => {
-    const { data, error } = await supabase.from('profiles').select('*').eq('id', id).single();
+    const { data } = await supabase.from('profiles').select('*').eq('id', id).single();
     if (data) {
       setBalance(data.balance || 0);
       setInventory(data.inventory || []);
@@ -31,23 +32,25 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    // Initial Sync
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        sync(session.user.id).then(profile => {
-          setUser({ ...session.user, username: profile?.username });
+        sync(session.user.id).then(p => {
+          setUser({ ...session.user, username: p?.username });
+          setLoading(false);
         });
+      } else {
+        setLoading(false);
       }
     });
 
-    // Auth Listener
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        const profile = await sync(session.user.id);
-        setUser({ ...session.user, username: profile?.username });
+        const p = await sync(session.user.id);
+        setUser({ ...session.user, username: p?.username });
       } else {
         setUser(null);
       }
+      setLoading(false);
     });
 
     return () => authListener.subscription.unsubscribe();
@@ -62,7 +65,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <WalletContext.Provider value={{ 
-      user, balance, stats, inventory, isOwner, lastClaim,
+      user, balance, stats, inventory, isOwner, loading, lastClaim,
       addWin: (n: number) => update({ balance: balance + n }),
       removeBet: (n: number) => update({ balance: balance - n }),
       setExactBalance: (n: number) => update({ balance: n }),
