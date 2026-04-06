@@ -11,77 +11,51 @@ export const Auth = () => {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
-    
     setLoading(true);
+    
     const cleanUser = username.toLowerCase().trim();
-    const email = `${cleanUser}@cc.com`; // Hardcoded domain
+    const email = `${cleanUser}@cc.com`;
 
     try {
       if (isSignUp) {
-        // --- SIGN UP ---
-        const { data, error: authError } = await supabase.auth.signUp({ email, password });
-        if (authError) throw authError;
-
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (error) throw error;
         if (data.user) {
-          const { error: profileError } = await supabase.from('profiles').upsert([
-            { id: data.user.id, username: cleanUser, balance: 5000, is_owner: cleanUser === 'cane' }
-          ]);
-          if (profileError) throw profileError;
-          alert("Account Created! Please click Login now.");
+          await supabase.from('profiles').upsert([{ 
+            id: data.user.id, username: cleanUser, balance: 5000, is_owner: cleanUser === 'cane' 
+          }]);
+          alert("Success! Now please click Login.");
           setIsSignUp(false);
         }
       } else {
-        // --- LOGIN ---
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
     } catch (err: any) {
-      alert(err.message || "An error occurred");
+      alert(err.message);
     } finally {
-      // THIS KILLS THE "WAITING..." HANG NO MATTER WHAT
-      setLoading(false);
+      setLoading(false); // FORCES BUTTON TO RESET
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#0f0202] flex items-center justify-center p-6 font-sans">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-[#1a0505] p-10 rounded-[3rem] border border-white/5 w-full max-w-md shadow-2xl text-center">
+    <div className="min-h-screen bg-[#0f0202] flex items-center justify-center p-6">
+      <div className="bg-[#1a0505] p-10 rounded-[3rem] border border-white/5 w-full max-w-md shadow-2xl text-center">
         <img src="/candycane.png" className="h-20 mx-auto mb-8" alt="Logo" />
-        <h2 className="text-4xl font-black italic uppercase mb-10 tracking-tighter text-white">
+        <h2 className="text-4xl font-black italic uppercase mb-10 text-white tracking-tighter">
           {isSignUp ? 'REGISTER' : 'LOGIN'}
         </h2>
-        
         <form onSubmit={handleAuth} className="space-y-4">
-          <input 
-            type="text" 
-            placeholder="USERNAME" 
-            className="w-full bg-black p-5 rounded-2xl outline-none border border-white/10 focus:border-red-600 font-bold uppercase text-white" 
-            value={username} 
-            onChange={e => setUsername(e.target.value)} 
-            required 
-          />
-          <input 
-            type="password" 
-            placeholder="PASSWORD" 
-            className="w-full bg-black p-5 rounded-2xl outline-none border border-white/10 focus:border-red-600 font-bold text-white" 
-            value={password} 
-            onChange={e => setPassword(e.target.value)} 
-            required 
-          />
-          
-          <button 
-            type="submit"
-            disabled={loading} 
-            className="w-full bg-red-600 py-5 rounded-2xl font-black uppercase shadow-xl active:scale-95 transition-all text-white text-lg disabled:opacity-50"
-          >
-            {loading ? 'PROCESSING...' : (isSignUp ? 'JOIN THE JAR' : 'LET\'S ROLL')}
+          <input type="text" placeholder="USERNAME" className="w-full bg-black p-5 rounded-2xl outline-none border border-white/10 focus:border-red-600 font-bold uppercase text-white" value={username} onChange={e => setUsername(e.target.value)} required />
+          <input type="password" placeholder="PASSWORD" className="w-full bg-black p-5 rounded-2xl outline-none border border-white/10 focus:border-red-600 font-bold text-white" value={password} onChange={e => setPassword(e.target.value)} required />
+          <button type="submit" disabled={loading} className="w-full bg-red-600 py-5 rounded-2xl font-black uppercase text-white text-lg active:scale-95 transition-all">
+            {loading ? '...' : (isSignUp ? 'JOIN NOW' : 'LOG IN')}
           </button>
         </form>
-        
-        <button onClick={() => setIsSignUp(!isSignUp)} className="mt-8 text-white/30 hover:text-white font-black text-xs uppercase tracking-[0.2em] block w-full">
-          {isSignUp ? 'Already a player? Sign In' : 'New here? Create Account'}
+        <button onClick={() => setIsSignUp(!isSignUp)} className="mt-8 text-white/30 hover:text-white font-black text-xs uppercase block w-full">
+          {isSignUp ? 'Go to Login' : 'Need an Account? Sign Up'}
         </button>
-      </motion.div>
+      </div>
     </div>
   );
 };

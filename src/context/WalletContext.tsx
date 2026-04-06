@@ -10,21 +10,18 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [inventory, setInventory] = useState<any[]>([]);
   const [isOwner, setIsOwner] = useState(false);
   const [lastClaim, setLastClaim] = useState<string | null>(null);
-  const [lastExplore, setLastExplore] = useState<string | null>(null);
 
-  const syncProfile = async (userId: string) => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
+  const sync = async (id: string) => {
+    const { data } = await supabase.from('profiles').select('*').eq('id', id).single();
     if (data) {
       setBalance(data.balance || 0);
       setInventory(data.inventory || []);
       setLastClaim(data.last_daily_claim === '-infinity' ? null : data.last_daily_claim);
-      setLastExplore(data.last_explore === '-infinity' ? null : data.last_explore);
       setIsOwner(data.is_owner || data.username?.toLowerCase() === 'cane');
-      
       let atk = 10, def = 5;
-      (data.inventory || []).forEach((item: any) => {
-        if (item.type === 'weapon') atk += item.stat;
-        if (item.type === 'armor') def += item.stat;
+      (data.inventory || []).forEach((i: any) => {
+        if (i.type === 'weapon') atk += i.stat;
+        if (i.type === 'armor') def += i.stat;
       });
       setStats({ hp: data.hp || 100, maxHp: data.max_hp || 100, attack: atk, defense: def });
       return data;
@@ -35,50 +32,35 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        setUser(session.user);
-        syncProfile(session.user.id);
+        sync(session.user.id).then(p => setUser({ ...session.user, username: p?.username }));
       }
     });
-
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        const p = await syncProfile(session.user.id);
-        setUser({ ...session.user, username: p?.username || session.user.email?.split('@')[0] });
-      } else {
-        setUser(null);
-      }
+        const p = await sync(session.user.id);
+        setUser({ ...session.user, username: p?.username });
+      } else { setUser(null); }
     });
-
     return () => authListener.subscription.unsubscribe();
   }, []);
 
-  const updateProfile = async (updates: any) => {
+  const update = async (ups: any) => {
     if (!user) return;
-    if (updates.balance !== undefined) setBalance(updates.balance);
-    await supabase.from('profiles').update(updates).eq('id', user.id);
-    syncProfile(user.id); 
+    if (ups.balance !== undefined) setBalance(ups.balance);
+    await supabase.from('profiles').update(ups).eq('id', user.id);
+    sync(user.id);
   };
 
   return (
     <WalletContext.Provider value={{ 
-      user, balance, stats, inventory, isOwner, lastClaim, lastExplore,
-      addWin: (amt: number) => updateProfile({ balance: balance + amt }),
-      removeBet: (amt: number) => updateProfile({ balance: balance - amt }),
-      setExactBalance: (amt: number) => updateProfile({ balance: amt }),
-      updateInventory: (newInv: any[]) => updateProfile({ inventory: newInv }),
+      user, balance, stats, inventory, isOwner, lastClaim,
+      addWin: (n: number) => update({ balance: balance + n }),
+      removeBet: (n: number) => update({ balance: balance - n }),
+      setExactBalance: (n: number) => update({ balance: n }),
+      updateInventory: (i: any[]) => update({ inventory: i }),
       claimDaily: async () => {
         const now = new Date().toISOString();
-        await updateProfile({ balance: balance + 15000, last_daily_claim: now });
-      },
-      exploreWorld: async (foundItem: any) => {
-        const now = new Date().toISOString();
-        const newInv = [...inventory, foundItem];
-        await updateProfile({ inventory: newInv, last_explore: now });
-      },
-      sellItem: async (index: number, price: number) => {
-        const newInv = [...inventory];
-        newInv.splice(index, 1);
-        await updateProfile({ inventory: newInv, balance: balance + price });
+        await update({ balance: balance + 15000, last_daily_claim: now });
       },
       signOut: () => supabase.auth.signOut()
     }}>
