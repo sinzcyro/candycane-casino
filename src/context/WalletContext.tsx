@@ -10,72 +10,59 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [inventory, setInventory] = useState<any[]>([]);
   const [isOwner, setIsOwner] = useState(false);
   const [lastClaim, setLastClaim] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [lastExplore, setLastExplore] = useState<string | null>(null);
 
-  // This function is now "Silent" - it won't crash the app if it fails
-  const fetchProfile = async (userId: string) => {
-    try {
-      const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
-      if (data) {
-        setBalance(data.balance || 0);
-        setInventory(data.inventory || []);
-        setLastClaim(data.last_daily_claim === '-infinity' ? null : data.last_daily_claim);
-        setIsOwner(data.is_owner || data.username?.toLowerCase() === 'cane');
-        
-        let atk = 10, def = 5;
-        (data.inventory || []).forEach((item: any) => {
-          if (item.type === 'weapon') atk += item.stat;
-          if (item.type === 'armor') def += item.stat;
-        });
-        setStats({ hp: data.hp || 100, maxHp: data.max_hp || 100, attack: atk, defense: def });
-        return data;
-      }
-    } catch (e) { console.error("DB Fetch Error ignored to prevent hang"); }
-    return null;
+  // Sync function that doesn't block the app
+  const syncData = async (userId: string) => {
+    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    if (data) {
+      setBalance(data.balance || 0);
+      setInventory(data.inventory || []);
+      setLastClaim(data.last_daily_claim === '-infinity' ? null : data.last_daily_claim);
+      setLastExplore(data.last_explore === '-infinity' ? null : data.last_explore);
+      setIsOwner(data.is_owner || data.username?.toLowerCase() === 'cane');
+      
+      let atk = 10, def = 5;
+      (data.inventory || []).forEach((item: any) => {
+        if (item.type === 'weapon') atk += item.stat;
+        if (item.type === 'armor') def += item.stat;
+      });
+      setStats({ hp: data.hp || 100, maxHp: data.max_hp || 100, attack: atk, defense: def });
+    }
   };
 
   useEffect(() => {
-    // EMERGENCY FORCE LOAD: Site opens in 2 seconds no matter what
-    const forceLoad = setTimeout(() => setLoading(false), 2000);
-
+    // Initial check
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        fetchProfile(session.user.id).then((p) => {
-          setUser({ ...session.user, username: p?.username || session.user.email?.split('@')[0] });
-          setLoading(false);
-          clearTimeout(forceLoad);
-        });
-      } else {
-        setLoading(false);
-        clearTimeout(forceLoad);
+        setUser(session.user);
+        syncData(session.user.id);
       }
     });
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // Simple listener
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
-        const p = await fetchProfile(session.user.id);
-        setUser({ ...session.user, username: p?.username || session.user.email?.split('@')[0] });
+        setUser(session.user);
+        syncData(session.user.id);
       } else {
         setUser(null);
       }
-      setLoading(false);
     });
 
-    return () => {
-        authListener.subscription.unsubscribe();
-        clearTimeout(forceLoad);
-    };
+    return () => authListener.subscription.unsubscribe();
   }, []);
 
   const updateProfile = async (updates: any) => {
     if (!user) return;
     if (updates.balance !== undefined) setBalance(updates.balance);
     await supabase.from('profiles').update(updates).eq('id', user.id);
+    syncData(user.id); // Refresh in background
   };
 
   return (
     <WalletContext.Provider value={{ 
-      user, balance, stats, inventory, isOwner, loading, lastClaim,
+      user, balance, stats, inventory, isOwner, lastClaim, lastExplore,
       addWin: (amt: number) => updateProfile({ balance: balance + amt }),
       removeBet: (amt: number) => updateProfile({ balance: balance - amt }),
       setExactBalance: (amt: number) => updateProfile({ balance: amt }),
@@ -83,7 +70,15 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       claimDaily: async () => {
         const now = new Date().toISOString();
         await updateProfile({ balance: balance + 15000, last_daily_claim: now });
-        setLastClaim(now);
+      },
+      exploreWorld: async (foundItem: any) => {
+        const now = new Date().toISOString();
+        await updateProfile({ inventory: [...inventory, foundItem], last_explore: now });
+      },
+      sellItem: async (index: number, price: number) => {
+        const newInv = [...inventory];
+        newInv.splice(index, 1);
+        await updateProfile({ inventory: newInv, balance: balance + price });
       },
       signOut: () => supabase.auth.signOut()
     }}>
