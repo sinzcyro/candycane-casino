@@ -13,41 +13,37 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [lastExplore, setLastExplore] = useState<string | null>(null);
 
   const syncProfile = async (userId: string) => {
-    try {
-      const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
-      if (data) {
-        setBalance(data.balance || 0);
-        setInventory(data.inventory || []);
-        setLastClaim(data.last_daily_claim === '-infinity' ? null : data.last_daily_claim);
-        setLastExplore(data.last_explore === '-infinity' ? null : data.last_explore);
-        setIsOwner(data.is_owner || data.username?.toLowerCase() === 'cane');
-        
-        let atk = 10, def = 5;
-        (data.inventory || []).forEach((item: any) => {
-          if (item.type === 'weapon') atk += item.stat;
-          if (item.type === 'armor') def += item.stat;
-        });
-        setStats({ hp: data.hp || 100, maxHp: data.max_hp || 100, attack: atk, defense: def });
-        return data;
-      }
-    } catch (e) { console.error("Sync Error:", e); }
+    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    if (data) {
+      setBalance(data.balance || 0);
+      setInventory(data.inventory || []);
+      setLastClaim(data.last_daily_claim === '-infinity' ? null : data.last_daily_claim);
+      setLastExplore(data.last_explore === '-infinity' ? null : data.last_explore);
+      setIsOwner(data.is_owner || data.username?.toLowerCase() === 'cane');
+      
+      let atk = 10, def = 5;
+      (data.inventory || []).forEach((item: any) => {
+        if (item.type === 'weapon') atk += item.stat;
+        if (item.type === 'armor') def += item.stat;
+      });
+      setStats({ hp: data.hp || 100, maxHp: data.max_hp || 100, attack: atk, defense: def });
+      return data;
+    }
     return null;
   };
 
   useEffect(() => {
-    // Check session instantly
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        syncProfile(session.user.id).then((p) => {
-          setUser({ ...session.user, username: p?.username || session.user.email?.split('@')[0] });
-        });
+        setUser(session.user);
+        syncProfile(session.user.id);
       }
     });
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         const p = await syncProfile(session.user.id);
-        setUser({ ...session.user, username: p?.username });
+        setUser({ ...session.user, username: p?.username || session.user.email?.split('@')[0] });
       } else {
         setUser(null);
       }
