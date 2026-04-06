@@ -2,83 +2,46 @@ import { useState } from 'react';
 import { useWallet } from '../context/WalletContext';
 import { supabase } from '../lib/supabase';
 import { motion } from 'framer-motion';
-import { Package, Send, Trash2, Sword, Shield } from 'lucide-react';
+import { Package, Send, Sword, Shield, DollarSign } from 'lucide-react';
 
 export const Inventory = () => {
-  const { user, inventory, updateInventory } = useWallet();
+  const { user, inventory, sellItem } = useWallet();
   const [targetUser, setTargetUser] = useState('');
   const [status, setStatus] = useState('');
 
-  const giftItem = async (itemIndex: number) => {
-    if (!targetUser) return setStatus("Type a username first!");
-    const item = inventory[itemIndex];
-    
-    setStatus('Gifting...');
-    // 1. Find the target
-    const { data: target } = await supabase.from('profiles').select('*').eq('username', targetUser.toLowerCase()).single();
-
-    if (!target) return setStatus("Player not found!");
-
-    // 2. Remove from my inventory
-    const myNewInv = [...inventory];
-    myNewInv.splice(itemIndex, 1);
-    
-    // 3. Add to their inventory
-    const targetInv = target.inventory || [];
-    const targetNewInv = [...targetInv, item];
-
-    // 4. Update Database
-    const { error: err1 } = await supabase.from('profiles').update({ inventory: myNewInv }).eq('id', user.id);
-    const { error: err2 } = await supabase.from('profiles').update({ inventory: targetNewInv }).eq('id', target.id);
-
-    if (!err1 && !err2) {
-      updateInventory(myNewInv);
-      setStatus(`GIFTED ${item.name} TO ${target.username}!`);
-      setTargetUser('');
-    } else {
-      setStatus("Gifting failed.");
-    }
+  const handleSell = (i: number, item: any) => {
+    const sellPrice = Math.floor(item.price * 0.7);
+    sellItem(i, sellPrice);
+    setStatus(`SOLD ${item.name} FOR $${sellPrice.toLocaleString()}`);
+    setTimeout(() => setStatus(''), 3000);
   };
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto pb-20">
       <div className="bg-[#1a0505] p-8 rounded-[3rem] border border-white/5 shadow-2xl">
-        <div className="flex items-center gap-4 mb-8">
-            <Package className="text-red-500" size={32} />
-            <h2 className="text-3xl font-black italic uppercase italic">My Vault</h2>
-        </div>
-
-        <div className="grid gap-4">
-          {inventory.length === 0 ? (
-            <p className="text-white/20 text-center py-10 font-bold uppercase tracking-widest border-2 border-dashed border-white/5 rounded-3xl">Your vault is empty...</p>
-          ) : (
-            inventory.map((item: any, i: number) => (
-              <div key={i} className="bg-black/40 p-6 rounded-2xl border border-white/5 flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-red-600/20 rounded-xl text-red-500">
-                        {item.type === 'weapon' ? <Sword size={20}/> : <Shield size={20}/>}
-                    </div>
-                    <div>
-                        <p className="font-black text-white uppercase italic">{item.name}</p>
-                        <p className="text-red-500 font-bold text-xs uppercase">+{item.stat} {item.type === 'weapon' ? 'ATK' : 'DEF'}</p>
-                    </div>
-                </div>
-                
-                <div className="flex gap-2">
-                    <input 
-                        type="text" 
-                        placeholder="USERNAME" 
-                        className="bg-black border border-white/10 px-4 py-2 rounded-lg text-xs font-bold outline-none focus:border-red-500 w-32 uppercase"
-                        value={targetUser}
-                        onChange={e => setTargetUser(e.target.value)}
-                    />
-                    <button onClick={() => giftItem(i)} className="bg-white text-black px-4 py-2 rounded-lg font-black text-[10px] uppercase hover:bg-red-600 hover:text-white transition-all flex items-center gap-2">
-                        <Send size={12}/> Gift
-                    </button>
+        <div className="flex items-center gap-4 mb-8"><Package className="text-red-500" size={32} /><h2 className="text-3xl font-black italic uppercase">My Vault</h2></div>
+        
+        <div className="grid gap-3">
+          {inventory.map((item: any, i: number) => (
+            <div key={i} className="bg-black/40 p-5 rounded-2xl border border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="flex items-center gap-4 flex-1">
+                <div className="p-3 bg-red-600/10 rounded-xl text-red-500">{item.type === 'weapon' ? <Sword size={20}/> : <Shield size={20}/>}</div>
+                <div>
+                    <p className="font-black text-white uppercase italic leading-none mb-1">{item.name}</p>
+                    <p className="text-red-500 font-bold text-[10px] uppercase">+{item.stat} {item.type === 'weapon' ? 'ATK' : 'DEF'}</p>
                 </div>
               </div>
-            ))
-          )}
+              
+              <div className="flex items-center gap-2">
+                <button onClick={() => handleSell(i, item)} className="bg-emerald-600/20 text-emerald-500 px-4 py-2 rounded-lg font-black text-[10px] uppercase flex items-center gap-1 hover:bg-emerald-600 hover:text-white transition-all">
+                    <DollarSign size={12}/> Sell (${Math.floor(item.price * 0.7).toLocaleString()})
+                </button>
+                <div className="h-8 w-[1px] bg-white/5 mx-1" />
+                <input type="text" placeholder="GIFT TO..." className="bg-black border border-white/10 px-3 py-2 rounded-lg text-[10px] font-bold outline-none focus:border-red-500 w-24 uppercase" value={targetUser} onChange={e => setTargetUser(e.target.value)}/>
+                <button className="bg-white text-black px-4 py-2 rounded-lg font-black text-[10px] uppercase">Send</button>
+              </div>
+            </div>
+          ))}
         </div>
         {status && <p className="mt-6 text-center font-black text-red-500 uppercase text-xs animate-pulse">{status}</p>}
       </div>

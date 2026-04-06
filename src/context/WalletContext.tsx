@@ -10,6 +10,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [inventory, setInventory] = useState<any[]>([]);
   const [isOwner, setIsOwner] = useState(false);
   const [lastClaim, setLastClaim] = useState<string | null>(null);
+  const [lastExplore, setLastExplore] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userAuth: any) => {
@@ -17,24 +18,21 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     if (data) {
       setUser({ ...userAuth, username: data.username });
       setBalance(data.balance);
-      setInventory(data.inventory || []);
+      const inv = data.inventory || [];
+      setInventory(inv);
       setIsOwner(data.is_owner || data.username.toLowerCase() === 'cane');
       setLastClaim(data.last_daily_claim === '-infinity' ? null : data.last_daily_claim);
+      setLastExplore(data.last_explore === '-infinity' ? null : data.last_explore);
       
-      // Auto-calculate stats based on inventory
-      recalculateStats(data.hp, data.max_hp, data.inventory || []);
+      // Calculate Stats
+      let atk = 10, def = 5;
+      inv.forEach((item: any) => {
+        if (item.type === 'weapon') atk += item.stat;
+        if (item.type === 'armor') def += item.stat;
+      });
+      setStats({ hp: 100, maxHp: 100, attack: atk, defense: def });
     }
     setLoading(false);
-  };
-
-  const recalculateStats = (currentHp: number, max: number, items: any[]) => {
-    let atk = 10;
-    let def = 5;
-    items.forEach(item => {
-      if (item.type === 'weapon') atk += item.stat;
-      if (item.type === 'armor') def += item.stat;
-    });
-    setStats({ hp: currentHp, maxHp: max, attack: atk, defense: def });
   };
 
   useEffect(() => {
@@ -52,14 +50,23 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <WalletContext.Provider value={{ 
-      user, balance, stats, inventory, isOwner, loading, lastClaim,
+      user, balance, stats, inventory, isOwner, loading, lastClaim, lastExplore,
       addWin: (amt: number) => updateProfile({ balance: balance + amt }),
       removeBet: (amt: number) => updateProfile({ balance: balance - amt }),
-      setExactBalance: (amt: number) => updateProfile({ balance: amt }),
       updateInventory: (newInv: any[]) => updateProfile({ inventory: newInv }),
       claimDaily: async () => {
         const now = new Date().toISOString();
         await updateProfile({ balance: balance + 15000, last_daily_claim: now });
+      },
+      exploreWorld: async (foundItem: any) => {
+        const now = new Date().toISOString();
+        const newInv = [...inventory, foundItem];
+        await updateProfile({ inventory: newInv, last_explore: now });
+      },
+      sellItem: async (index: number, price: number) => {
+        const newInv = [...inventory];
+        newInv.splice(index, 1);
+        await updateProfile({ inventory: newInv, balance: balance + price });
       },
       signOut: () => supabase.auth.signOut()
     }}>
