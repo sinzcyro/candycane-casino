@@ -10,17 +10,16 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [inventory, setInventory] = useState<any[]>([]);
   const [isOwner, setIsOwner] = useState(false);
   const [lastClaim, setLastClaim] = useState<string | null>(null);
-  const [lastExplore, setLastExplore] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // This function is now "Silent" - it won't crash the app if it fails
   const fetchProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+      const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
       if (data) {
         setBalance(data.balance || 0);
         setInventory(data.inventory || []);
         setLastClaim(data.last_daily_claim === '-infinity' ? null : data.last_daily_claim);
-        setLastExplore(data.last_explore === '-infinity' ? null : data.last_explore);
         setIsOwner(data.is_owner || data.username?.toLowerCase() === 'cane');
         
         let atk = 10, def = 5;
@@ -31,21 +30,24 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         setStats({ hp: data.hp || 100, maxHp: data.max_hp || 100, attack: atk, defense: def });
         return data;
       }
-      return null;
-    } catch (e) {
-      return null;
-    }
+    } catch (e) { console.error("DB Fetch Error ignored to prevent hang"); }
+    return null;
   };
 
   useEffect(() => {
+    // EMERGENCY FORCE LOAD: Site opens in 2 seconds no matter what
+    const forceLoad = setTimeout(() => setLoading(false), 2000);
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         fetchProfile(session.user.id).then((p) => {
           setUser({ ...session.user, username: p?.username || session.user.email?.split('@')[0] });
           setLoading(false);
+          clearTimeout(forceLoad);
         });
       } else {
         setLoading(false);
+        clearTimeout(forceLoad);
       }
     });
 
@@ -59,22 +61,21 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     });
 
-    return () => authListener.subscription.unsubscribe();
+    return () => {
+        authListener.subscription.unsubscribe();
+        clearTimeout(forceLoad);
+    };
   }, []);
 
   const updateProfile = async (updates: any) => {
     if (!user) return;
-    // Update local state instantly
     if (updates.balance !== undefined) setBalance(updates.balance);
-    if (updates.inventory !== undefined) setInventory(updates.inventory);
-    
-    // Send to DB
     await supabase.from('profiles').update(updates).eq('id', user.id);
   };
 
   return (
     <WalletContext.Provider value={{ 
-      user, balance, stats, inventory, isOwner, loading, lastClaim, lastExplore,
+      user, balance, stats, inventory, isOwner, loading, lastClaim,
       addWin: (amt: number) => updateProfile({ balance: balance + amt }),
       removeBet: (amt: number) => updateProfile({ balance: balance - amt }),
       setExactBalance: (amt: number) => updateProfile({ balance: amt }),
@@ -83,19 +84,6 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         const now = new Date().toISOString();
         await updateProfile({ balance: balance + 15000, last_daily_claim: now });
         setLastClaim(now);
-      },
-      exploreWorld: async (foundItem: any) => {
-        const now = new Date().toISOString();
-        const newInv = [...inventory, foundItem];
-        await updateProfile({ inventory: newInv, last_explore: now });
-        setInventory(newInv);
-        setLastExplore(now);
-      },
-      sellItem: async (index: number, price: number) => {
-        const newInv = [...inventory];
-        newInv.splice(index, 1);
-        await updateProfile({ inventory: newInv, balance: balance + price });
-        setInventory(newInv);
       },
       signOut: () => supabase.auth.signOut()
     }}>
