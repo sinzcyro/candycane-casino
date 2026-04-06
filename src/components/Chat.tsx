@@ -11,25 +11,17 @@ export const Chat = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // 1. Initial Load
     const fetchInitial = async () => {
       const { data } = await supabase.from('messages').select('*').order('created_at', { ascending: true }).limit(50);
       if (data) setMessages(data);
     };
     fetchInitial();
 
-    // 2. Realtime Subscription (The Fix)
-    const channel = supabase.channel('realtime_chat')
-      .on('postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'messages' }, 
-        (payload) => {
-          setMessages(prev => {
-            // Prevent duplicates
-            if (prev.find(m => m.id === payload.new.id)) return prev;
-            return [...prev, payload.new];
-          });
-        }
-      )
+    const channel = supabase.channel('chat_v2')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, 
+      (payload) => {
+        setMessages(prev => [...prev, payload.new]);
+      })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -44,17 +36,17 @@ export const Chat = () => {
     if (!newMessage.trim() || !user) return;
 
     const content = newMessage;
-    setNewMessage(''); // Clear instantly
+    setNewMessage('');
 
     const { error } = await supabase.from('messages').insert([{
       user_id: user.id,
-      username: user.username || user.user_metadata?.username || 'Guest',
+      username: user.username, // Using the fixed username from context
       content: content,
       is_owner: isOwner
     }]);
 
     if (error) {
-      console.error("Chat Error:", error);
+      console.error(error);
       setNewMessage(content);
     }
   };
@@ -64,21 +56,23 @@ export const Chat = () => {
       <div className="p-5 border-b border-white/5 flex items-center justify-between bg-red-600/5">
         <div className="flex items-center gap-3">
             <MessageSquare className="text-red-500" size={18} />
-            <h2 className="font-black italic uppercase tracking-widest text-xs text-white">Lobby Chat</h2>
+            <h2 className="font-black italic uppercase tracking-widest text-xs text-white underline decoration-red-600 underline-offset-4">Live Lobby</h2>
         </div>
-        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_#10b981]" />
+        <div className="flex items-center gap-1">
+            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+        </div>
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-4 scroll-smooth">
-        {messages.map((msg) => (
-          <motion.div initial={{ opacity: 0, x: -5 }} animate={{ opacity: 1, x: 0 }} key={msg.id} className="flex flex-col">
+        {messages.map((msg, i) => (
+          <motion.div initial={{ opacity: 0, x: -5 }} animate={{ opacity: 1, x: 0 }} key={msg.id || i} className="flex flex-col group">
             <div className="flex items-center gap-2 mb-1">
-              <span className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-1 ${msg.is_owner ? 'text-red-500' : 'text-white/30'}`}>
+              <span className={`text-[10px] font-black uppercase tracking-tighter flex items-center gap-1 ${msg.is_owner ? 'text-red-500' : 'text-white/30'}`}>
                 {msg.is_owner && <Crown size={10} className="fill-red-500" />}
                 {msg.username}
               </span>
             </div>
-            <p className={`text-sm py-2.5 px-4 rounded-2xl w-fit max-w-[95%] break-words ${msg.is_owner ? 'bg-red-600 text-white font-bold border border-red-400/50 shadow-lg' : 'bg-white/5 text-white/80'}`}>
+            <p className={`text-sm py-2 px-4 rounded-2xl w-fit max-w-[95%] break-words ${msg.is_owner ? 'bg-red-600 text-white font-bold border border-red-400/30' : 'bg-white/5 text-white/80'}`}>
               {msg.content}
             </p>
           </motion.div>
@@ -88,8 +82,8 @@ export const Chat = () => {
       <form onSubmit={sendMessage} className="p-4 bg-black/40 flex gap-2">
         <input 
           type="text" 
-          placeholder="Say something..." 
-          className="flex-1 bg-black border border-white/5 rounded-xl px-4 py-3 text-sm outline-none focus:border-red-600 transition-all text-white font-medium"
+          placeholder="Type here..." 
+          className="flex-1 bg-black border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-red-600 transition-all text-white font-bold"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
         />
