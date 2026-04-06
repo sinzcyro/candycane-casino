@@ -11,7 +11,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [isOwner, setIsOwner] = useState(false);
   const [lastClaim, setLastClaim] = useState<string | null>(null);
 
-  const sync = async (id: string) => {
+  const refresh = async (id: string) => {
     const { data } = await supabase.from('profiles').select('*').eq('id', id).single();
     if (data) {
       setBalance(data.balance || 0);
@@ -32,14 +32,18 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        sync(session.user.id).then(p => setUser({ ...session.user, username: p?.username }));
+        setUser(session.user);
+        refresh(session.user.id).then(p => setUser((prev: any) => ({ ...prev, username: p?.username })));
       }
     });
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        const p = await sync(session.user.id);
-        setUser({ ...session.user, username: p?.username });
-      } else { setUser(null); }
+        setUser(session.user);
+        const p = await refresh(session.user.id);
+        setUser((prev: any) => ({ ...prev, username: p?.username }));
+      } else {
+        setUser(null);
+      }
     });
     return () => authListener.subscription.unsubscribe();
   }, []);
@@ -48,7 +52,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     if (!user) return;
     if (ups.balance !== undefined) setBalance(ups.balance);
     await supabase.from('profiles').update(ups).eq('id', user.id);
-    sync(user.id);
+    refresh(user.id);
   };
 
   return (

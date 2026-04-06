@@ -21,11 +21,7 @@ import { AdminPanel } from './components/AdminPanel'
 import { Chat } from './components/Chat'
 import { Auth } from './components/Auth'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Wallet, Candy, User as UserIcon, LayoutDashboard, Trophy, LogOut, 
-  Crown, ShieldAlert, Gift, Clock, Zap, Target, Disc, Layers, 
-  Cherry, FastForward, Send, Info, Swords, ShoppingBag, Package, Heart, Map 
-} from 'lucide-react'
+import { Wallet, Candy, User as UserIcon, LayoutDashboard, Trophy, LogOut, Crown, ShieldAlert, Gift, Clock, Zap, Target, Disc, Layers, Cherry, FastForward, Send, Info, Swords, ShoppingBag, Package, Heart, Map } from 'lucide-react'
 import confetti from 'canvas-confetti'
 
 function App() {
@@ -52,18 +48,12 @@ function App() {
   if (!user) return <Auth />;
 
   return (
-    <div className="min-h-screen bg-[#0f0202] text-white font-sans pb-20 overflow-x-hidden">
+    <div className="min-h-screen bg-[#0f0202] text-white selection:bg-red-500/30 font-sans pb-20 overflow-x-hidden">
       <nav className="border-b border-white/5 bg-[#1a0505]/95 backdrop-blur-md px-6 py-2 flex items-center justify-between sticky top-0 z-50">
         <div onClick={() => setActiveView('home')} className="cursor-pointer">
           <img src="/candycane.png" alt="Logo" className="h-14 w-auto" />
         </div>
         <div className="flex items-center gap-4">
-          <div className="hidden md:flex items-center gap-3 bg-[#2a0a0a] border border-red-500/20 px-4 py-2 rounded-xl">
-            <Heart size={18} className="text-red-500 fill-red-500" />
-            <div className="w-24 h-2 bg-black/40 rounded-full overflow-hidden border border-white/5">
-              <div style={{ width: `${Math.min(100, stats.hp)}%` }} className="h-full bg-red-600" />
-            </div>
-          </div>
           <div className="bg-[#2a0a0a] border border-red-500/20 px-4 py-2 rounded-xl flex items-center gap-3">
             <Wallet size={18} className="text-red-500" />
             <span className="font-black">${balance?.toLocaleString()}</span>
@@ -74,7 +64,7 @@ function App() {
             </div>
             <AnimatePresence>
               {showMenu && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="absolute right-0 mt-4 w-64 bg-[#1a0505] border border-white/10 rounded-2xl shadow-2xl p-2 z-[100]">
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-64 bg-[#1a0505] border border-white/10 rounded-2xl shadow-2xl p-2 z-[100]">
                   <div className="px-4 py-3 border-b border-white/5 text-center font-black text-red-500 uppercase italic truncate">{user.username || 'Loading...'}</div>
                   <MenuBtn icon={<Package size={16}/>} label="MY VAULT" onClick={() => {setActiveView('inventory'); setShowMenu(false)}} />
                   <MenuBtn icon={<Map size={16}/>} label="EXPLORE" onClick={() => {setActiveView('explore'); setShowMenu(false)}} />
@@ -91,62 +81,64 @@ function App() {
       </nav>
 
       <main className="max-w-7xl mx-auto p-6">
-        {activeView === 'home' ? (
-          <div className="grid lg:grid-cols-12 gap-8 py-6">
-            <div className="lg:col-span-8 space-y-8">
-              <div className="relative overflow-hidden w-full h-80 bg-gradient-to-br from-red-600 to-rose-950 rounded-[3rem] p-12 flex flex-col justify-center shadow-2xl border-b-8 border-black/40 text-center">
-                  <h1 className="text-7xl font-black mb-2 uppercase italic tracking-tighter text-white">SWEET WINS</h1>
-                  <div className="bg-white/10 w-fit px-6 py-2 rounded-full border border-white/20 backdrop-blur-md mx-auto text-xs font-black animate-pulse uppercase">🎁 5 INVITES = 5 MILLION CANDY</div>
+        <AnimatePresence mode="wait">
+          {activeView === 'home' ? (
+            <div className="grid lg:grid-cols-12 gap-8 py-6">
+              <div className="lg:col-span-8 space-y-8">
+                <div className="relative overflow-hidden w-full h-80 bg-gradient-to-br from-red-600 to-rose-950 rounded-[3rem] p-12 flex flex-col justify-center shadow-2xl border-b-8 border-black/40 text-center">
+                    <h1 className="text-7xl font-black mb-2 uppercase italic tracking-tighter text-white">SWEET WINS</h1>
+                    <div className="bg-white/10 w-fit px-6 py-2 rounded-full border border-white/20 backdrop-blur-md mx-auto text-xs font-black animate-pulse uppercase">🎁 5 INVITES = 5 MILLION CANDY</div>
+                </div>
+                <div className="bg-[#1a0505] border border-white/5 p-6 rounded-[2.5rem] flex items-center justify-between shadow-xl">
+                    <div className="flex items-center gap-4">
+                        <div className={`p-4 rounded-2xl ${canClaim ? 'bg-red-600 animate-bounce' : 'bg-white/5'}`}><Gift size={32} /></div>
+                        <div><h2 className="text-xl font-black italic uppercase">Daily Treat</h2><p className="text-white/40 text-xs font-bold uppercase">$15,000 Payout</p></div>
+                    </div>
+                    {canClaim ? <button onClick={() => {claimDaily(); confetti();}} className="bg-white text-black font-black px-10 py-4 rounded-2xl uppercase">Claim</button> : <div className="flex items-center gap-3 bg-black/40 px-6 py-4 rounded-2xl border border-white/5"><Clock size={18} className="text-red-500" /><span className="font-black text-white/50">{timeLeft}</span></div>}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <GameCard title="PVP Arena" icon={<Swords/>} color="from-red-700 to-black" onClick={() => setActiveView('arena')} />
+                    <GameCard title="Candy Shop" icon={<ShoppingBag/>} color="from-amber-500 to-orange-700" onClick={() => setActiveView('shop')} />
+                    <GameCard title="Wild Explore" icon={<Map/>} color="from-emerald-700 to-teal-900" onClick={() => setActiveView('explore')} />
+                    <GameCard title="Plinko" icon={<Target/>} color="from-red-400 to-red-600" onClick={() => setActiveView('plinko')} />
+                    <GameCard title="Crash" icon={<Zap/>} color="from-orange-500 to-red-600" onClick={() => setActiveView('crash')} />
+                    <GameCard title="Slots" icon={<Cherry/>} color="from-purple-600 to-pink-600" onClick={() => setActiveView('slots')} />
+                    <GameCard title="Mines" icon={<Target/>} color="from-rose-500 to-rose-800" onClick={() => setActiveView('mines')} />
+                    <GameCard title="Roulette" icon={<Disc/>} color="from-zinc-800 to-black" onClick={() => setActiveView('roulette')} />
+                    <GameCard title="Blackjack" icon={<Candy/>} color="from-zinc-100 to-zinc-300" darkText onClick={() => setActiveView('blackjack')} />
+                    <GameCard title="Coinflip" icon={<Disc/>} color="from-red-500 to-red-700" onClick={() => setActiveView('coinflip')} />
+                    <GameCard title="Racing" icon={<FastForward/>} color="from-emerald-500 to-teal-700" onClick={() => setActiveView('race')} />
+                    <GameCard title="Stack" icon={<Layers/>} color="from-blue-500 to-cyan-600" onClick={() => setActiveView('tower')} />
+                </div>
               </div>
-              <div className="bg-[#1a0505] border border-white/5 p-6 rounded-[2.5rem] flex items-center justify-between shadow-xl">
-                  <div className="flex items-center gap-4">
-                      <div className={`p-4 rounded-2xl ${canClaim ? 'bg-red-600 animate-bounce' : 'bg-white/5'}`}><Gift size={32} /></div>
-                      <div><h2 className="text-xl font-black italic uppercase">Daily Treat</h2><p className="text-white/40 text-xs font-bold uppercase">$15,000 Payout</p></div>
-                  </div>
-                  {canClaim ? <button onClick={() => {claimDaily(); confetti();}} className="bg-white text-black font-black px-10 py-4 rounded-2xl uppercase">Claim</button> : <div className="flex items-center gap-3 bg-black/40 px-6 py-4 rounded-2xl border border-white/5"><Clock size={18} className="text-red-500" /><span className="font-black text-white/50">{timeLeft}</span></div>}
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <GameCard title="PVP Arena" icon={<Swords/>} color="from-red-700 to-black" onClick={() => setActiveView('arena')} />
-                  <GameCard title="Candy Shop" icon={<ShoppingBag/>} color="from-amber-500 to-orange-700" onClick={() => setActiveView('shop')} />
-                  <GameCard title="Wild Explore" icon={<Map/>} color="from-emerald-700 to-teal-900" onClick={() => setActiveView('explore')} />
-                  <GameCard title="Plinko" icon={<Target/>} color="from-red-400 to-red-600" onClick={() => setActiveView('plinko')} />
-                  <GameCard title="Crash" icon={<Zap/>} color="from-orange-500 to-red-600" onClick={() => setActiveView('crash')} />
-                  <GameCard title="Slots" icon={<Cherry/>} color="from-purple-600 to-pink-600" onClick={() => setActiveView('slots')} />
-                  <GameCard title="Mines" icon={<Target/>} color="from-rose-500 to-rose-800" onClick={() => setActiveView('mines')} />
-                  <GameCard title="Roulette" icon={<Disc/>} color="from-zinc-800 to-black" onClick={() => setActiveView('roulette')} />
-                  <GameCard title="Blackjack" icon={<Candy/>} color="from-zinc-100 to-zinc-300" darkText onClick={() => setActiveView('blackjack')} />
-                  <GameCard title="Coinflip" icon={<Disc/>} color="from-red-500 to-red-700" onClick={() => setActiveView('coinflip')} />
-                  <GameCard title="Racing" icon={<FastForward/>} color="from-emerald-500 to-teal-700" onClick={() => setActiveView('race')} />
-                  <GameCard title="Stack" icon={<Layers/>} color="from-blue-500 to-cyan-600" onClick={() => setActiveView('tower')} />
+              <div className="lg:col-span-4 sticky top-24"><Chat /></div>
+            </div>
+          ) : (
+            <div className="space-y-6 pt-6">
+              <button onClick={() => setActiveView('home')} className="flex items-center gap-2 text-white/30 hover:text-white font-black text-xs uppercase"><LayoutDashboard size={16}/> Lobby</button>
+              <div className="w-full">
+                {activeView === 'arena' && <Arena />}
+                {activeView === 'shop' && <CandyShop />}
+                {activeView === 'inventory' && <Inventory />}
+                {activeView === 'explore' && <Explore />}
+                {activeView === 'coinflip' && <Coinflip />}
+                {activeView === 'mines' && <Mines />}
+                {activeView === 'blackjack' && <Blackjack />}
+                {activeView === 'crash' && <Crash />}
+                {activeView === 'slots' && <Slots />}
+                {activeView === 'roulette' && <Roulette />}
+                {activeView === 'cups' && <Cups />}
+                {activeView === 'tower' && <Tower />}
+                {activeView === 'race' && <Race />}
+                {activeView === 'plinko' && <Plinko />}
+                {activeView === 'leaderboard' && <Leaderboard />}
+                {activeView === 'transfer' && <Transfer />}
+                {activeView === 'admin' && <AdminPanel />}
+                {activeView === 'about' && <About />}
               </div>
             </div>
-            <div className="lg:col-span-4 sticky top-24"><Chat /></div>
-          </div>
-        ) : (
-          <div className="space-y-6 pt-6">
-            <button onClick={() => setActiveView('home')} className="flex items-center gap-2 text-white/30 hover:text-white font-black text-xs uppercase transition-colors"><LayoutDashboard size={16}/> Lobby</button>
-            <div className="w-full">
-              {activeView === 'arena' && <Arena />}
-              {activeView === 'shop' && <CandyShop />}
-              {activeView === 'inventory' && <Inventory />}
-              {activeView === 'explore' && <Explore />}
-              {activeView === 'coinflip' && <Coinflip />}
-              {activeView === 'mines' && <Mines />}
-              {activeView === 'blackjack' && <Blackjack />}
-              {activeView === 'crash' && <Crash />}
-              {activeView === 'slots' && <Slots />}
-              {activeView === 'roulette' && <Roulette />}
-              {activeView === 'cups' && <Cups />}
-              {activeView === 'tower' && <Tower />}
-              {activeView === 'race' && <Race />}
-              {activeView === 'plinko' && <Plinko />}
-              {activeView === 'leaderboard' && <Leaderboard />}
-              {activeView === 'transfer' && <Transfer />}
-              {activeView === 'admin' && <AdminPanel />}
-              {activeView === 'about' && <About />}
-            </div>
-          </div>
-        )}
+          )}
+        </AnimatePresence>
       </main>
     </div>
   )
@@ -154,7 +146,7 @@ function App() {
 
 function GameCard({ title, icon, color, onClick, darkText = false }: any) {
   return (
-    <motion.div whileHover={{ scale: 1.03, y: -4 }} onClick={onClick} className={`h-44 rounded-[2.5rem] bg-gradient-to-br ${color} p-8 cursor-pointer shadow-2xl border border-white/5 flex flex-col justify-between group`}>
+    <motion.div whileHover={{ scale: 1.03, y: -4 }} onClick={onClick} className={`h-44 rounded-[2.5rem] bg-gradient-to-br ${color} p-8 cursor-pointer overflow-hidden shadow-2xl border border-white/5 flex flex-col justify-between group`}>
        <div className={`${darkText ? 'text-black/20' : 'text-white/20'}`}>{icon}</div>
        <h3 className={`text-3xl font-black italic uppercase tracking-tighter ${darkText ? 'text-black' : 'text-white'}`}>{title}</h3>
     </motion.div>
@@ -163,7 +155,7 @@ function GameCard({ title, icon, color, onClick, darkText = false }: any) {
 
 function MenuBtn({ icon, label, onClick }: any) {
   return (
-    <button onClick={onClick} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black text-white/70 hover:bg-white/5 hover:text-white uppercase">
+    <button onClick={onClick} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black text-white/70 hover:bg-white/5 hover:text-white uppercase transition-all">
       {icon} {label}
     </button>
   );

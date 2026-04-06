@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { motion } from 'framer-motion';
 
 export const Auth = () => {
   const [loading, setLoading] = useState(false);
@@ -10,9 +9,7 @@ export const Auth = () => {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading) return;
     setLoading(true);
-    
     const cleanUser = username.toLowerCase().trim();
     const email = `${cleanUser}@cc.com`;
 
@@ -24,7 +21,7 @@ export const Auth = () => {
           await supabase.from('profiles').upsert([{ 
             id: data.user.id, username: cleanUser, balance: 5000, is_owner: cleanUser === 'cane' 
           }]);
-          alert("Success! Now please click Login.");
+          alert("Created! Click Login.");
           setIsSignUp(false);
         }
       } else {
@@ -34,26 +31,24 @@ export const Auth = () => {
     } catch (err: any) {
       alert(err.message);
     } finally {
-      setLoading(false); // FORCES BUTTON TO RESET
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#0f0202] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[#0f0202] flex items-center justify-center p-6 text-white font-sans">
       <div className="bg-[#1a0505] p-10 rounded-[3rem] border border-white/5 w-full max-w-md shadow-2xl text-center">
-        <img src="/candycane.png" className="h-20 mx-auto mb-8" alt="Logo" />
-        <h2 className="text-4xl font-black italic uppercase mb-10 text-white tracking-tighter">
-          {isSignUp ? 'REGISTER' : 'LOGIN'}
-        </h2>
+        <img src="/candycane.png" className="h-20 mx-auto mb-8" />
+        <h2 className="text-3xl font-black italic uppercase mb-8">{isSignUp ? 'REGISTER' : 'LOGIN'}</h2>
         <form onSubmit={handleAuth} className="space-y-4">
-          <input type="text" placeholder="USERNAME" className="w-full bg-black p-5 rounded-2xl outline-none border border-white/10 focus:border-red-600 font-bold uppercase text-white" value={username} onChange={e => setUsername(e.target.value)} required />
-          <input type="password" placeholder="PASSWORD" className="w-full bg-black p-5 rounded-2xl outline-none border border-white/10 focus:border-red-600 font-bold text-white" value={password} onChange={e => setPassword(e.target.value)} required />
-          <button type="submit" disabled={loading} className="w-full bg-red-600 py-5 rounded-2xl font-black uppercase text-white text-lg active:scale-95 transition-all">
-            {loading ? '...' : (isSignUp ? 'JOIN NOW' : 'LOG IN')}
+          <input type="text" placeholder="USERNAME" className="w-full bg-black p-4 rounded-2xl outline-none border border-white/10 focus:border-red-600 font-bold uppercase" value={username} onChange={e => setUsername(e.target.value)} required />
+          <input type="password" placeholder="PASSWORD" className="w-full bg-black p-4 rounded-2xl outline-none border border-white/10 focus:border-red-600 font-bold" value={password} onChange={e => setPassword(e.target.value)} required />
+          <button type="submit" className="w-full bg-red-600 py-4 rounded-2xl font-black uppercase text-white shadow-lg active:scale-95 transition-all">
+            {loading ? '...' : (isSignUp ? 'JOIN' : 'LOG IN')}
           </button>
         </form>
-        <button onClick={() => setIsSignUp(!isSignUp)} className="mt-8 text-white/30 hover:text-white font-black text-xs uppercase block w-full">
-          {isSignUp ? 'Go to Login' : 'Need an Account? Sign Up'}
+        <button onClick={() => setIsSignUp(!isSignUp)} className="mt-6 text-white/30 hover:text-white font-bold text-xs uppercase block w-full">
+          {isSignUp ? 'Already a player? Login' : 'New? Sign Up'}
         </button>
       </div>
     </div>
