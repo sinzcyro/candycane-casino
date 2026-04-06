@@ -31,7 +31,7 @@ import confetti from 'canvas-confetti'
 type ViewType = 'home' | 'coinflip' | 'mines' | 'blackjack' | 'crash' | 'slots' | 'roulette' | 'cups' | 'tower' | 'race' | 'plinko' | 'transfer' | 'leaderboard' | 'admin' | 'about' | 'arena' | 'shop' | 'inventory' | 'explore';
 
 function App() {
-  const { user, balance, stats, isOwner, signOut, loading, lastClaim, claimDaily } = useWallet();
+  const { user, balance, stats, isOwner, signOut, lastClaim, claimDaily } = useWallet();
   const [activeView, setActiveView] = useState<ViewType>('home');
   const [showMenu, setShowMenu] = useState(false);
   const [timeLeft, setTimeLeft] = useState("");
@@ -53,11 +53,6 @@ function App() {
     return () => clearInterval(interval);
   }, [lastClaim]);
 
-  if (loading) return (
-    <div className="min-h-screen bg-[#0f0202] flex items-center justify-center">
-      <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-    </div>
-  );
   if (!user) return <Auth />;
 
   return (
@@ -70,7 +65,7 @@ function App() {
           <div className="hidden md:flex items-center gap-3 bg-[#2a0a0a] border border-red-500/20 px-4 py-2 rounded-xl shadow-lg min-w-[140px]">
             <Heart size={18} className="text-red-500 fill-red-500" />
             <div className="flex-1 h-2 bg-black/40 rounded-full border border-white/5 overflow-hidden">
-              <motion.div animate={{ width: `${Math.min(100, (stats.hp / stats.maxHp) * 100)}%` }} className="h-full bg-red-600" />
+              <motion.div animate={{ width: `${Math.min(100, (stats.hp / stats.maxHp) * 100)}%` }} className="h-full bg-red-600 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
             </div>
             <span className="text-[10px] font-black text-white/50">{stats.hp}</span>
           </div>
@@ -79,13 +74,13 @@ function App() {
             <span className="font-black text-lg tracking-tight">${balance?.toLocaleString()}</span>
           </div>
           <div className="relative">
-            <motion.div whileTap={{ scale: 0.9 }} onClick={() => setShowMenu(!showMenu)} className={`w-10 h-10 rounded-full border flex items-center justify-center cursor-pointer transition-all ${isOwner ? 'bg-red-600 border-white' : 'bg-[#2a0a0a] border-white/10'}`}>
+            <motion.div whileTap={{ scale: 0.9 }} onClick={() => setShowMenu(!showMenu)} className={`w-10 h-10 rounded-full border flex items-center justify-center cursor-pointer transition-all ${isOwner ? 'bg-red-600 border-white shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'bg-[#2a0a0a] border-white/10'}`}>
               {isOwner ? <Crown size={20} className="text-white fill-white" /> : <UserIcon size={20} />}
             </motion.div>
             <AnimatePresence>
               {showMenu && (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-64 bg-[#1a0505] border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-2 z-[100]">
-                  <div className="px-4 py-4 border-b border-white/5 mb-2 text-center font-black text-red-500 uppercase italic truncate text-lg">{user.username}</div>
+                  <div className="px-4 py-4 border-b border-white/5 mb-2 text-center font-black text-red-500 uppercase italic truncate text-lg">{user.username || 'Player'}</div>
                   <MenuBtn icon={<Package size={16}/>} label="MY VAULT" onClick={() => {setActiveView('inventory'); setShowMenu(false)}} />
                   <MenuBtn icon={<Map size={16}/>} label="WILD EXPLORE" onClick={() => {setActiveView('explore'); setShowMenu(false)}} />
                   <MenuBtn icon={<Swords size={16}/>} label="PVP ARENA" onClick={() => {setActiveView('arena'); setShowMenu(false)}} />
@@ -108,17 +103,17 @@ function App() {
           {activeView === 'home' ? (
             <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid lg:grid-cols-12 gap-8 py-6">
               <div className="lg:col-span-8 space-y-8">
-                <div className="relative overflow-hidden w-full h-80 bg-gradient-to-br from-red-600 to-rose-950 rounded-[3rem] p-12 flex flex-col justify-center shadow-2xl border-b-8 border-black/40">
-                    <h1 className="text-7xl font-black mb-2 uppercase italic tracking-tighter text-white drop-shadow-2xl text-center">SWEET WINS</h1>
-                    <p className="text-white/60 font-bold text-xs tracking-[0.4em] uppercase mb-4 text-center">Provably Fair Candy Casino</p>
-                    <div className="bg-white/10 w-fit px-6 py-2 rounded-full border border-white/20 backdrop-blur-md mb-4 mx-auto font-black text-xs uppercase tracking-widest animate-pulse">🎁 5 INVITES = 5 MILLION CANDY</div>
+                <div className="relative overflow-hidden w-full h-80 bg-gradient-to-br from-red-600 to-rose-950 rounded-[3rem] p-12 flex flex-col justify-center shadow-2xl border-b-8 border-black/40 text-center">
+                    <h1 className="text-7xl font-black mb-2 uppercase italic tracking-tighter text-white drop-shadow-2xl leading-none">SWEET WINS</h1>
+                    <p className="text-white/60 font-bold text-sm tracking-[0.4em] uppercase mb-4">Provably Fair Candy Casino</p>
+                    <div className="bg-white/10 w-fit px-6 py-2 rounded-full border border-white/20 backdrop-blur-md mx-auto font-black text-xs uppercase tracking-widest animate-pulse">🎁 5 INVITES = 5 MILLION CANDY</div>
                 </div>
                 <div className="bg-[#1a0505] border border-white/5 p-6 rounded-[2.5rem] flex items-center justify-between shadow-xl border-l-4 border-l-red-600">
                     <div className="flex items-center gap-4">
                         <div className={`p-4 rounded-2xl ${canClaim ? 'bg-red-600 animate-bounce' : 'bg-white/5'}`}><Gift size={32} /></div>
                         <div><h2 className="text-xl font-black italic uppercase">Daily Treat</h2><p className="text-white/40 text-xs font-bold uppercase">$15,000 Payout</p></div>
                     </div>
-                    {canClaim ? <button onClick={() => {claimDaily(); confetti();}} className="bg-white text-black font-black px-10 py-4 rounded-2xl uppercase italic hover:bg-red-600 hover:text-white transition-all">Claim</button> : <div className="flex items-center gap-3 bg-black/40 px-6 py-4 rounded-2xl border border-white/5"><Clock size={18} className="text-red-500" /><span className="font-black text-white/50">{timeLeft}</span></div>}
+                    {canClaim ? <button onClick={() => {claimDaily(); confetti();}} className="bg-white text-black font-black px-10 py-4 rounded-2xl uppercase italic hover:bg-red-600 hover:text-white transition-all shadow-xl">Claim</button> : <div className="flex items-center gap-3 bg-black/40 px-6 py-4 rounded-2xl border border-white/5"><Clock size={18} className="text-red-500" /><span className="font-black text-white/50">{timeLeft}</span></div>}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <GameCard title="PVP Arena" icon={<Swords/>} color="from-red-700 to-black" onClick={() => setActiveView('arena')} />
@@ -170,7 +165,7 @@ function App() {
 
 function GameCard({ title, icon, color, onClick, darkText = false }: any) {
   return (
-    <motion.div whileHover={{ scale: 1.03, y: -4 }} onClick={onClick} className={`h-40 rounded-[2.5rem] bg-gradient-to-br ${color} p-8 cursor-pointer shadow-2xl border border-white/5 flex flex-col justify-between group transition-all`}>
+    <motion.div whileHover={{ scale: 1.03, y: -4 }} onClick={onClick} className={`h-44 rounded-[2.5rem] bg-gradient-to-br ${color} p-8 cursor-pointer overflow-hidden shadow-2xl border border-white/5 flex flex-col justify-between group transition-all`}>
        <div className={`${darkText ? 'text-black/20' : 'text-white/20'}`}>{icon}</div>
        <h3 className={`text-3xl font-black italic uppercase tracking-tighter ${darkText ? 'text-black' : 'text-white'}`}>{title}</h3>
     </motion.div>
